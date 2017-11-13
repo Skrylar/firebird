@@ -1,0 +1,71 @@
+
+@settitle Nimized Firebird 3
+
+@ifnottex
+@node Top
+@top
+
+@end ifnottex
+
+@node Database connections
+@chapter Database connections
+
+@quotation Note
+It is possible to use Pascal-style string handling, where a pointer to text and a given length of the text is passed to this function. Presently that method has been wrapped over, enforcing the use of cstrings. A ``proper'' version which accepts native Nim strings might be possible.
+@end quotation
+
+@deftypefn Function ISC_STATUS isc_attach_database @var{status_vector}: ref ISC_STATUS_ARRAY; @var{db_name}: cstring; @var{db}: ref isc_db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
+
+Attaches a new database.
+
+@table @code
+@item status
+Error status vector.
+
+@item db_name
+Name of the database to attach.
+
+@item db
+Handle; will be overriden to either @code{NULL} on error, or the handle to the attached database on success.
+
+@item parm_buffer_length
+Length of the database parameter buffer.
+
+@item parm_buffer
+A specially constructed string, which acts as a set of parameters for the database. Connection information such as the username and password to connect with are specified here.
+@end table
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_attach_database()}
+
+@end deftypefn
+
+@deftypefn Function ISC_STATUS isc_detach_database @var{status}: ref ISC_STATUS, @var{db}: ref isc_db_handle)
+
+Releases a previously attached database.
+
+@table @code
+@item status
+Error status vector.
+
+@item db
+Handle to the database to be freed.
+
+@end table
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_detach_database()}
+
+@end deftypefn
+
+@node User management
+@chapter User management
+
+@deftypefn Function ISC_STATUS isc_add_user @var{status}: ref ISC_STATUS_ARRAY; data: ref USER_SEC_DATA
+@end deftypefn
+
+@deftypefn Function ISC_STATUS isc_delete_user @var{status}: ref ISC_STATUS_ARRAY; data: ref USER_SEC_DATA
+@end deftypefn
+
+@deftypefn Function ISC_STATUS isc_modify_user @var{status}: ref ISC_STATUS_ARRAY; data: ref USER_SEC_DATA
+@end deftypefn
+
+@bye
