@@ -311,10 +311,10 @@ const
 #* OSRI database functions */
 #***************************/
 
-proc isc_attach_database(status: ref ISC_STATUS_ARRAY; db_name_length: cshort; db_name: cstring; db: ref isc_db_handle; parm_buffer_length: cshort = 0; parm_buffer: cstring = nil): ISC_STATUS {.importc, header: ibase_h.}
+proc isc_attach_database(status: var ISC_STATUS_ARRAY; db_name_length: cshort; db_name: cstring; db: var isc_db_handle; parm_buffer_length: cshort = 0; parm_buffer: cstring = nil): ISC_STATUS {.importc, header: ibase_h.}
 
-proc isc_attach_database*(status_vector: ref ISC_STATUS_ARRAY; db_name: cstring; db: ref isc_db_handle; parm_buffer_length: cshort = 0; parm_buffer: cstring = nil): ISC_STATUS {.inline.} =
-  isc_attach_database(status_vector, 0, db_name, db, parm_buffer_length, parm_buffer)
+proc isc_attach_database*(status_vector: var ISC_STATUS_ARRAY; db_name: cstring; db: var isc_db_handle; parm_buffer_length: cshort = 0; parm_buffer: cstring = nil): ISC_STATUS {.inline.} =
+  result = isc_attach_database(status_vector, 0, db_name, db, parm_buffer_length, parm_buffer)
 
 # TODO ISC_STATUS isc_array_gen_sdl(status: ref ISC_STATUS_ARRAY, const ISC_ARRAY_DESC*, ISC_SHORT*, ISC_UCHAR*, ISC_SHORT*);
 # TODO ISC_STATUS isc_array_get_slice(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, ISC_QUAD*, const ISC_ARRAY_DESC*, pointer, ISC_LONG*);
@@ -331,7 +331,7 @@ proc isc_attach_database*(status_vector: ref ISC_STATUS_ARRAY; db_name: cstring;
 # TODO ISC_STATUS isc_cancel_events(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, ISC_LONG *);
 # TODO ISC_STATUS isc_close_blob(status: ref ISC_STATUS_ARRAY, isc_blob_handle *);
 # TODO ISC_STATUS isc_commit_retaining(status: ref ISC_STATUS_ARRAY, isc_tr_handle *);
-# TODO ISC_STATUS isc_commit_transaction(status: ref ISC_STATUS_ARRAY, isc_tr_handle *);
+proc isc_commit_transaction*(status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
 # TODO ISC_STATUS isc_create_blob(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, isc_blob_handle*, ISC_QUAD*);
 # TODO ISC_STATUS isc_create_blob2(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, isc_blob_handle*, ISC_QUAD*, short, const cstring);
 # TODO ISC_STATUS isc_create_database(status: ref ISC_STATUS_ARRAY, short, const cstring, db: ref isc_db_handle, short, const cstring, short);
@@ -340,7 +340,7 @@ proc isc_attach_database*(status_vector: ref ISC_STATUS_ARRAY; db_name: cstring;
 # TODO void isc_decode_sql_date(const ISC_DATE*, pointer);
 # TODO void isc_decode_sql_time(const ISC_TIME*, pointer);
 # TODO void isc_decode_timestamp(const ISC_TIMESTAMP*, pointer);
-# TODO proc isc_detach_database*(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle): ISC_STATUS {.importc, header: ibase_h.}
+proc isc_detach_database*(status: var ISC_STATUS_ARRAY, db: var isc_db_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
 # TODO ISC_STATUS isc_drop_database(status: ref ISC_STATUS_ARRAY_ARRAY, db: ref isc_db_handle);
 # TODO ISC_STATUS isc_dsql_allocate_statement(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, isc_stmt_handle *);
 # TODO ISC_STATUS isc_dsql_alloc_statement2(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, isc_stmt_handle *);
@@ -349,7 +349,12 @@ proc isc_attach_database*(status_vector: ref ISC_STATUS_ARRAY; db_name: cstring;
 # TODO ISC_STATUS isc_dsql_exec_immed2(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, unsigned short, const cstring, unsigned short, const XSQLDA*, const XSQLDA*);
 # TODO ISC_STATUS isc_dsql_execute(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, isc_stmt_handle*, unsigned short, const XSQLDA*);
 # TODO ISC_STATUS isc_dsql_execute2(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, isc_stmt_handle*, unsigned short, const XSQLDA*, const XSQLDA*);
-# TODO ISC_STATUS isc_dsql_execute_immediate(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, unsigned short, const cstring, unsigned short, const XSQLDA*);
+
+proc isc_dsql_execute_immediate(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; length: cushort; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): ISC_STATUS {.importc, header: ibase_h.}
+
+proc isc_dsql_execute_immediate*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): ISC_STATUS {.inline.} =
+  result = isc_dsql_execute_immediate(status, db, transaction, 0, query, dialect, xsql)
+
 # TODO ISC_STATUS isc_dsql_fetch(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, const XSQLDA *);
 # TODO ISC_STATUS isc_dsql_finish(db: ref isc_db_handle);
 # TODO ISC_STATUS isc_dsql_free_statement(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short);

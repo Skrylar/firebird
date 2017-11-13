@@ -56,6 +56,20 @@ Handle to the database to be freed.
 
 @end deftypefn
 
+@node Transactions
+@chapter Transactions
+
+@deftypefn Function ISC_STATUS isc_commit_transaction status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle
+@end deftypefn
+
+@node Running queries
+@chapter Running queries
+
+@deftypefn Function ISC_STATUS isc_dsql_execute_immediate status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA = nil
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute_immediate()}
+@end deftypefn
+
 @node User management
 @chapter User management
 
