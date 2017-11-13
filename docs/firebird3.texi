@@ -59,6 +59,7 @@ Handle to the database to be freed.
 @node Transactions
 @chapter Transactions
 
+@anchor{isc_commit_transaction}
 @deftypefn Function ISC_STATUS isc_commit_transaction status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle
 @end deftypefn
 
@@ -66,6 +67,8 @@ Handle to the database to be freed.
 @chapter Running queries
 
 @deftypefn Function ISC_STATUS isc_dsql_execute_immediate status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA = nil
+
+If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should initially be zero. A handle to the new database is written to @var{db}, and a new transaction is started whom's handle is written to @var{transaction}. You must commit the transaction to finish creating the database. @xref{isc_commit_transaction}
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute_immediate()}
 @end deftypefn
