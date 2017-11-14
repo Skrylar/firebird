@@ -289,7 +289,7 @@ type
 template XSQLDA_LENGTH*(n: int): int =
   XSQLDA.sizeof + ((n - 1) * XSQLVAR.sizeof)
 
-proc create_xsqlda*(vars: int): PXSQLDA =
+proc make_xsqlda*(vars: int): PXSQLDA =
   result = cast[PXSQLDA](alloc(XSQLDA_LENGTH(vars)))
   result.version = SQLDA_VERSION1
   result.sqln = vars.ISC_SHORT

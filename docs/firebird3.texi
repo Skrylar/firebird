@@ -190,14 +190,14 @@ Runs a previously prepared statement.  @xref{isc_dsql_prepare}@.
 Returns the amount of memory which must be allocated to store an @code{XSQLDA} object with @var{n} variables.
 @end deftypefn
 
-@anchor{create_xsqlda}
-@deftypefn Proc PXSQLDA create_xsqlda vars: int
+@anchor{make_xsqlda}
+@deftypefn Proc PXSQLDA make_xsqlda vars: int
 Allocates a new @code{XSQLDA} in unmanaged memory, with enough slots for @var{vars} variables.  Must be freed manually, @xref{free_xsqlda}@.
 @end deftypefn
 
 @anchor{free_xsqlda}
 @deftypefn Proc void free_xsqlda self: PXSQLDA
-Frees an @code{XSQLDA} that was previously allocated.  @xref{create_xsqlda}@.
+Frees an @code{XSQLDA} that was previously allocated.  @xref{make_xsqlda}@.
 @end deftypefn
 
 @deftypefn Proc PXSQLVAR [] self: PXSQLDA; index: int
