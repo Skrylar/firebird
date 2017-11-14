@@ -247,10 +247,14 @@ const
 #* Dynamic SQL definitions */
 #***************************/
 
+type
+  # SK: turned in to an enum for nimization
+  StatementFreeType* = enum
+    DSQL_close      = 1
+    DSQL_drop       = 2
+    DSQL_unprepare  = 4
+
 const
-  DSQL_close*      = 1
-  DSQL_drop*       = 2
-  DSQL_unprepare*  = 4
   SQLDA_VERSION1*  = 1
 
 type
@@ -343,15 +347,15 @@ proc isc_commit_transaction*(status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle
 proc isc_detach_database*(status: var ISC_STATUS_ARRAY, db: var isc_db_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
 # TODO ISC_STATUS isc_drop_database(status: ref ISC_STATUS_ARRAY_ARRAY, db: ref isc_db_handle);
 
-proc isc_dsql_allocate_statement(status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle): ISC_STATUS {.importc: "isc_dsql_allocate_statement", header: ibase_h.}
+proc isc_dsql_allocate_statement_inner(status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle): ISC_STATUS {.importc: "isc_dsql_allocate_statement", header: ibase_h.}
 
-proc isc_dsql_alloc_statement2(status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle): ISC_STATUS {.importc: "isc_dsql_alloc_statement2", header: ibase_h.}
+proc isc_dsql_alloc_statement2_inner(status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle): ISC_STATUS {.importc: "isc_dsql_alloc_statement2", header: ibase_h.}
 
-proc isc_dsql_allocate_statement(status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle; autofree: bool = true): ISC_STATUS {.inline.} =
+proc isc_dsql_allocate_statement*(status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle; autofree: bool = true): ISC_STATUS {.inline.} =
   if autofree:
-    result = isc_dsql_allocate_statement(status, db, statement)
+    result = isc_dsql_allocate_statement_inner(status, db, statement)
   else:
-    result = isc_dsql_alloc_statement2(status, db, statement)
+    result = isc_dsql_alloc_statement2_inner(status, db, statement)
 
 # TODO ISC_STATUS isc_dsql_describe(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, XSQLDA *);
 # TODO ISC_STATUS isc_dsql_describe_bind(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, XSQLDA *);
@@ -371,7 +375,12 @@ proc isc_dsql_execute_immediate*(status: var ISC_STATUS_ARRAY; db: var isc_db_ha
 
 # TODO ISC_STATUS isc_dsql_fetch(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, const XSQLDA *);
 # TODO ISC_STATUS isc_dsql_finish(db: ref isc_db_handle);
-# TODO ISC_STATUS isc_dsql_free_statement(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short);
+
+proc isc_dsql_free_statement_inner(status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; on_free: cushort): ISC_STATUS {.importc: "isc_dsql_free_statement", header: ibase_h.}
+
+proc isc_dsql_free_statement*(status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; on_free: StatementFreeType): ISC_STATUS {.inline.} =
+  result = isc_dsql_free_statement_inner(status, statement, on_free.cushort)
+
 # TODO ISC_STATUS isc_dsql_insert(status: ref ISC_STATUS_ARRAY, isc_stmt_handle*, unsigned short, XSQLDA*);
 # TODO ISC_STATUS isc_dsql_prepare(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, isc_stmt_handle*, unsigned short, const cstring, unsigned short, XSQLDA*);
 # TODO ISC_STATUS isc_dsql_set_cursor_name(status: ref ISC_STATUS_ARRAY, isc_stmt_handle*, const cstring, unsigned short);

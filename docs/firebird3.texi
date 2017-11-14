@@ -122,6 +122,38 @@ Allocates a handle for a prepared statement. @var{autofree} statements are clean
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_alloc_statement2()}
 @end deftypefn
 
+@deftypefn Function ISC_STATUS isc_dsql_free_statement status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; on_free: StatementFreeType
+
+Explicitly frees a previously allocated statement.  Not necessary for statements created with @var{autofree = true}.
+
+@table @code
+@item status
+Error status vector.
+
+@item statement
+A handle to the statement you want freed.
+
+@item on_free
+Action to handle when freeing the statement.  May be one of the following:
+
+@table @code
+@item DSQL_close
+Closes any open cursors using this statement.  The handle and statement remain valid and prepared for future use.
+
+@item DSQL_unprepare
+Closes any open cursors using this statement, and removes the statement from the handle.  The handle remains valid and may have another statement prepared with it.
+
+@item DSQL_drop
+Like unprepare, but the handle is destroyed after the statement is unprepared.
+
+@end table
+
+@end table
+
+@cite{https://stackoverflow.com/questions/35924822/firebird-c-client-api-statement-transaction-and-cursor-lifecycle#35956754}
+
+@end deftypefn
+
 @node User Management
 @chapter User Management
 
