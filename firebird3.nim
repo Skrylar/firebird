@@ -263,7 +263,7 @@ type
     sqlscale*: ISC_SHORT
     sqlsubtype*: ISC_SHORT
     sqllen*: ISC_SHORT
-    sqldata*: cstring
+    sqldata*: pointer
     sqlind*: ptr ISC_SHORT
     sqlname_length*: ISC_SHORT
     sqlname*: array[0..31, ISC_SCHAR]
@@ -280,8 +280,8 @@ type
     version*: ISC_SHORT
     sqldaid*: array[0..7, ISC_SCHAR]
     sqldabc*: ISC_LONG
-    sqln*: ISC_SHORT
-    sqld*: ISC_SHORT
+    sqln*: ISC_SHORT # number of parameters allocated
+    sqld*: ISC_SHORT # number of parameters firebird wants to use
     sqlvar*: array[0..0, XSQLVAR]
 
   PXSQLDA* = ptr XSQLDA
@@ -293,8 +293,20 @@ proc make_xsqlda*(vars: int): PXSQLDA =
   result = cast[PXSQLDA](alloc(XSQLDA_LENGTH(vars)))
   result.version = SQLDA_VERSION1
   result.sqln = vars.ISC_SHORT
+  result.sqld = vars.ISC_SHORT
 
-proc free_xsqlda*(self: PXSQLDA) =
+proc free_xsqlda*(self: PXSQLDA; dealloc_children: bool = true) =
+  # free potentially allocated data; if you are doing cheeky things,
+  # like using pointers to local value buffers, you will want this to
+  # be false.
+  if dealloc_children:
+    for i in 0..self.sqln:
+      let here = self[i]
+      if here.sqldata != nil:
+        dealloc(here.sqldata)
+      if here.sqlind != nil:
+        dealloc(here.sqlind)
+  # now ditch the object
   dealloc(self)
 
 proc `[]`* (self: PXSQLDA; index: int): PXSQLVAR =

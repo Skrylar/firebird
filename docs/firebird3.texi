@@ -1,4 +1,5 @@
 
+\input texinfo
 @settitle Nimized Firebird 3
 
 @ifnottex
@@ -196,17 +197,139 @@ Allocates a new @code{XSQLDA} in unmanaged memory, with enough slots for @var{va
 @end deftypefn
 
 @anchor{free_xsqlda}
-@deftypefn Proc void free_xsqlda self: PXSQLDA
+@deftypefn Proc void free_xsqlda self: PXSQLDA; free_children: bool = true
 Frees an @code{XSQLDA} that was previously allocated.  @xref{make_xsqlda}@.
+
+If @var{free_children} is @code{true}, pointers within the variable that are non-@code{nil} will be freed with Nim's built-in @code{dealloc} routine.  If you are using pointers to local data buffers, or cheeky pointer manipulations with @code{alloc} memory, set this to @code{false}.
 @end deftypefn
 
 @deftypefn Proc PXSQLVAR [] self: PXSQLDA; index: int
 Accesses the @var{index}'th variable within the @code{XSQLDA} object.  Assertions perform range checking in debug builds.  As a pointer is returned, changes to the result equal changes in the original @code{XSQLDA} object.  It goes without saying that values returned by this indexer do not live past the @code{XSQLDA} that they were taken from.
 @end deftypefn
 
+@section XSQL Variable Type
+
+@anchor{XSQLVAR}
+@example
+XSQLVAR* @{.importc, header: ibase_h.@} = object
+  sqltype*: ISC_SHORT
+  sqlscale*: ISC_SHORT
+  sqlsubtype*: ISC_SHORT
+  sqllen*: ISC_SHORT
+  sqldata*: pointer
+  sqlind*: ptr ISC_SHORT
+  sqlname_length*: ISC_SHORT
+  sqlname*: array[0..31, ISC_SCHAR]
+  relname_length*: ISC_SHORT
+  relname*: array[0..31, ISC_SCHAR]
+  ownname_length*: ISC_SHORT
+  ownname*: array[0..31, ISC_SCHAR]
+  aliasname_length*: ISC_SHORT
+  aliasname*: array[0..31, ISC_SCHAR]
+@end example
+
+An @code{XSQLVAR} can represent either a variable going in to the database via a prepared statement (@xref{Prepared Queries}), or coming out of the database via a query.
+
+@vtable @code
+@item sqltype
+The expected SQL type (when describing inputs to a prepared statement), the SQL type actually provided (when providing parameters to a prepared statement), or the data type returned by a query (when receiving data from the database.)
+
+@xref{SQL Data Types}@.
+
+@item sqlsubtype
+Subtypes provide more information about a kind of thing.  For example, some blobs represent different types of information.  The subtype field tells you what kind of information is stored in the bob.
+
+In the case of @code{SQL_BLOB}, the subtypes are as follows:
+@table @samp
+@item 0
+Binary data.
+
+@item 1
+Text.
+
+@item 2
+BLR (internal Firebird stuff).
+
+@end table
+
+@cite{http://www.firebirdfaq.org/faq165/}
+
+@item sqllen
+The number of bytes available in @var{sqldata} to read or write to.  Adjust this to either the @code{sizeof} a type (when using numeric types) or the available space in a text buffer when dealing with strings.
+
+@item sqldata
+A pointer to memory which contains the value either going in to, or coming out of the database.  May either be a reference to local variables@footnote{Be warned that since XSQLDAs are in memory not controlled by the garbage collector, there is no way for Nim to know an object is still in use by Firebird.  You should expect pointers to local values are valid only for Firebird calls within the proc which made the assignments.} or memory created with Nim's @code{alloc} routine.
+
+@item sqlind
+A pointer to a @code{cshort}.  Dereferenced, its value is interpreted as follows:
+
+@table @samp
+@item 0
+A value is not @code{NULL} in SQL terms.
+
+@item -1
+A value is @code{NULL} in SQL terms.
+
+@end table
+
+@end vtable
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/XSQLVAR_Field_Descriptions}
+
+@node SQL Data Types
+@chapter SQL Data Types
+
+As Firebird's documentation is lacking on which specific types match up to which SQL types, a convenient mapping of SQL types to Nim is provided:
+
+@multitable {SQL_TIMESTAMP} {Memory buffer}
+@headitem Type name
+@tab Nim type
+@item SQL_TEXT
+@tab Memory buffer
+@item SQL_VARYING
+@tab Memory buffer
+@item SQL_SHORT
+@tab cshort
+@item SQL_LONG
+@tab clong
+@item SQL_FLOAT
+@tab cfloat
+@item SQL_DOUBLE
+@tab cdouble
+@item SQL_D_FLOAT
+@tab ???
+@item SQL_TIMESTAMP
+@tab ISC_TIMESTAMP
+@item SQL_BLOB
+@tab GDS_QUAD
+@item SQL_ARRAY
+@tab GDS_QUAD
+@item SQL_QUAD
+@tab GDS_QUAD
+@item SQL_TYPE_TIME
+@tab ISC_TIME
+@item SQL_TYPE_DATE
+@tab ISC_DATE
+@item SQL_INT64
+@tab int64
+@item SQL_BOOLEAN
+@tab ???
+@item SQL_NULL
+@tab ???
+@end multitable
+
+@var{SQL_DATE} is synonymous with @var{SQL_TIMESTAMP}.
+
+@quotation Memory buffer
+These types take a raw pointer to memory, where text is stored.  The @var{sqllen} field of an @code{XSQLVAR} is used to determine how long the buffer must be (when receiving data) or actually is (when sending data.)  @xref{XSQLVAR}@.
+@end quotation
+
+@cite{Firebird 3.0's example/api/*.c files}
+
 @node Index of Procs
 @appendix Index of Procs
 
+@syncodeindex vr fn
 @printindex fn
 
 @bye
