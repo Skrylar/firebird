@@ -346,13 +346,18 @@ proc isc_detach_database*(status: var ISC_STATUS_ARRAY, db: var isc_db_handle): 
 # TODO ISC_STATUS isc_dsql_alloc_statement2(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, isc_stmt_handle *);
 # TODO ISC_STATUS isc_dsql_describe(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, XSQLDA *);
 # TODO ISC_STATUS isc_dsql_describe_bind(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, XSQLDA *);
-# TODO ISC_STATUS isc_dsql_exec_immed2(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, unsigned short, const cstring, unsigned short, const XSQLDA*, const XSQLDA*);
+
+proc isc_dsql_exec_immed2_inner(status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; transaction: ref isc_tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): ISC_STATUS {.importc: "isc_dsql_exec_immed2", header: ibase_h.}
+
+proc isc_dsql_exec_immed2*(status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; transaction: ref isc_tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): ISC_STATUS {.inline, discardable.} =
+  result = isc_dsql_exec_immed2_inner(status, db, transaction, 0, statement, dialect, inx, outx)
+
 # TODO ISC_STATUS isc_dsql_execute(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, isc_stmt_handle*, unsigned short, const XSQLDA*);
 # TODO ISC_STATUS isc_dsql_execute2(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, isc_stmt_handle*, unsigned short, const XSQLDA*, const XSQLDA*);
 
 proc isc_dsql_execute_immediate(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; length: cushort; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): ISC_STATUS {.importc, header: ibase_h.}
 
-proc isc_dsql_execute_immediate*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): ISC_STATUS {.inline.} =
+proc isc_dsql_execute_immediate*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): ISC_STATUS {.inline, discardable.} =
   result = isc_dsql_execute_immediate(status, db, transaction, 0, query, dialect, xsql)
 
 # TODO ISC_STATUS isc_dsql_fetch(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, const XSQLDA *);
@@ -383,9 +388,14 @@ proc isc_dsql_execute_immediate*(status: var ISC_STATUS_ARRAY; db: var isc_db_ha
 # TODO ISC_STATUS isc_put_slice(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, ISC_QUAD*, short, const cstring, short, const ISC_LONG*, ISC_LONG, pointer);
 # TODO ISC_STATUS isc_que_events(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, ISC_LONG*, short, const ISC_UCHAR*, ISC_EVENT_CALLBACK, pointer);
 # TODO ISC_STATUS isc_rollback_retaining(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle);
-# TODO ISC_STATUS isc_rollback_transaction(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle);
+proc isc_rollback_transaction*(status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
 # TODO ISC_STATUS isc_start_multiple(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, short, void *);
-# TODO ISC_STATUS ISC_EXPORT_VARARG isc_start_transaction(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, short, ...);
+
+proc isc_start_transaction_inner(status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; handle_count: cshort; db: var isc_db_handle; tpb_length: cushort; tpb: cstring): ISC_STATUS {.importc: "isc_start_transaction", header: ibase_h,}
+
+proc isc_start_transaction*(status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; db: var isc_db_handle; tpb_length: cushort = 0; tpb: cstring = nil): ISC_STATUS {.inline, discardable.} =
+  result = isc_start_transaction_inner(status, transaction, 1.cshort, db, tpb_length, tpb)
+
 # TODO ISC_STATUS fb_disconnect_transaction(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle);
 # TODO ISC_LONG isc_sqlcode(const status: ref ISC_STATUS_ARRAY);
 # TODO void isc_sqlcode_s(const status: ref ISC_STATUS_ARRAY, ISC_ULONG*);

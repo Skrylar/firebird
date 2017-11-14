@@ -59,8 +59,26 @@ Handle to the database to be freed.
 @node Transactions
 @chapter Transactions
 
+@deftypefn Function ISC_STATUS isc_start_transaction status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; db: var isc_db_handle; tpb_length: cushort; tpb: cstring
+
+Starts a new transaction, storing a handle to the transaction within @var{transaction}. The database in question is specified with the handle @var{db}. If a transaction parameter buffer is used, its length and string are supplied. The nimized version of this function defaults both transaction parameter buffer options to nil.
+
+@quotation Note
+Firebird supports transactions against multiple open databases; the API for doing this in a Nim-supported way is a little hairy, so it was (for now) simplified to a call that works on a single database.
+@end quotation
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_start_transaction()}
+@end deftypefn
+
+@deftypefn Function ISC_STATUS isc_rollback_transaction status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle
+
+Aborts a transaction; any changes that would have been made inside of it are not made. The database remains unchanged.
+@end deftypefn
+
 @anchor{isc_commit_transaction}
 @deftypefn Function ISC_STATUS isc_commit_transaction status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle
+
+Commits a transaction; any changes that would have been made inside of it are now made if possible.  Should an error occur while trying to commit any data, @emph{none} of the changes will be made.
 @end deftypefn
 
 @node Running queries
@@ -68,9 +86,18 @@ Handle to the database to be freed.
 
 @deftypefn Function ISC_STATUS isc_dsql_execute_immediate status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA = nil
 
+Runs a statement that does not return data.
+
 If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should initially be zero. A handle to the new database is written to @var{db}, and a new transaction is started whom's handle is written to @var{transaction}. You must commit the transaction to finish creating the database. @xref{isc_commit_transaction}
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute_immediate()}
+@end deftypefn
+
+@deftypefn Function ISC_STATUS isc_dsql_exec_immed2 status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; transaction: ref isc_tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil
+
+Runs a statement which returns no more than a single row of results.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_exec_immed2()}
 @end deftypefn
 
 @node User management
@@ -84,5 +111,10 @@ If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should
 
 @deftypefn Function ISC_STATUS isc_modify_user @var{status}: ref ISC_STATUS_ARRAY; data: ref USER_SEC_DATA
 @end deftypefn
+
+@node Index of Functions
+@appendix Index of Functions
+
+@printindex fn
 
 @bye
