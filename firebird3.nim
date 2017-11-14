@@ -1,5 +1,5 @@
 
-assert csize.sizeof >= pointer.sizeof
+assert int.sizeof == pointer.sizeof
 
 const
   ibase_h = "ibase.h"
@@ -29,7 +29,7 @@ else:
 when defined(fb_use_size_t):
   type
     FB_SIZE_T* {.importc, header: ibase_h.} = csize
-    FB_SSIZE_T* {.importc, header: ibase_h.} = cintptr
+    FB_SSIZE_T* {.importc, header: ibase_h.} = int
 else:
   type
     FB_SIZE_T* {.importc, header: ibase_h.} = cuint
@@ -44,7 +44,7 @@ const
   FB_SQLSTATE_SIZE* {.importc, header: ibase_h.} = (FB_SQLSTATE_LENGTH + 1)
 
 type
-  ISC_STATUS* {.importc, header: ibase_h.} = csize # XXX there is no intptr type in Nim, so we sort of have to pray this holds true
+  ISC_STATUS* {.importc, header: ibase_h.} = int # XXX Araq says nim int is always the same size as pointer
   ISC_STATUS_ARRAY* = array[0..(ISC_STATUS_LENGTH-1), ISC_STATUS]
   FB_SQLSTATE_STRING* = array[0..(FB_SQLSTATE_SIZE-1), cchar]
 
@@ -274,6 +274,8 @@ type
     aliasname_length*: ISC_SHORT
     aliasname*: array[0..31, ISC_SCHAR]
 
+  PXSQLVAR* = ptr XSQLVAR
+
   XSQLDA* {.importc, header: ibase_h.} = object
     version*: ISC_SHORT
     sqldaid*: array[0..7, ISC_SCHAR]
@@ -281,6 +283,28 @@ type
     sqln*: ISC_SHORT
     sqld*: ISC_SHORT
     sqlvar*: array[0..0, XSQLVAR]
+
+  PXSQLDA* = ptr XSQLDA
+
+template XSQLDA_LENGTH*(n: int): int =
+  XSQLDA.sizeof + ((n - 1) * XSQLVAR.sizeof)
+
+proc create_xsqlda*(vars: int): PXSQLDA =
+  result = cast[PXSQLDA](alloc(XSQLDA_LENGTH(vars)))
+  result.version = SQLDA_VERSION1
+  result.sqln = vars.ISC_SHORT
+
+proc free_xsqlda*(self: PXSQLDA) =
+  dealloc(self)
+
+proc `[]`* (self: PXSQLDA; index: int): PXSQLVAR =
+  # bounds checking
+  assert index >= 0
+  assert index < self.sqln
+  # return the thing
+  var x = cast[int](unsafeaddr self.sqlvar[0])
+  inc x, (XSQLVAR.sizeof) * index
+  result = cast[PXSQLVAR](x)
 
 #define XSQLDA_LENGTH(n)        (sizeof (XSQLDA) + (n - 1) * sizeof (XSQLVAR))
 

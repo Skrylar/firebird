@@ -14,7 +14,7 @@
 It is possible to use Pascal-style string handling, where a pointer to text and a given length of the text is passed to this function. Presently that method has been wrapped over, enforcing the use of cstrings. A ``proper'' version which accepts native Nim strings might be possible.
 @end quotation
 
-@deftypefn Function ISC_STATUS isc_attach_database @var{status_vector}: ref ISC_STATUS_ARRAY; @var{db_name}: cstring; @var{db}: ref isc_db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
+@deftypefn Proc ISC_STATUS isc_attach_database @var{status_vector}: ref ISC_STATUS_ARRAY; @var{db_name}: cstring; @var{db}: ref isc_db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
 
 Attaches a new database.
 
@@ -39,7 +39,7 @@ A specially constructed string, which acts as a set of parameters for the databa
 
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_detach_database @var{status}: ref ISC_STATUS, @var{db}: ref isc_db_handle)
+@deftypefn Proc ISC_STATUS isc_detach_database @var{status}: ref ISC_STATUS, @var{db}: ref isc_db_handle)
 
 Releases a previously attached database.
 
@@ -59,7 +59,7 @@ Handle to the database to be freed.
 @node Transactions
 @chapter Transactions
 
-@deftypefn Function ISC_STATUS isc_start_transaction status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; db: var isc_db_handle; tpb_length: cushort; tpb: cstring
+@deftypefn Proc ISC_STATUS isc_start_transaction status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; db: var isc_db_handle; tpb_length: cushort; tpb: cstring
 
 Starts a new transaction, storing a handle to the transaction within @var{transaction}. The database in question is specified with the handle @var{db}. If a transaction parameter buffer is used, its length and string are supplied. The nimized version of this function defaults both transaction parameter buffer options to nil.
 
@@ -70,13 +70,13 @@ Firebird supports transactions against multiple open databases; the API for doin
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_start_transaction()}
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_rollback_transaction status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle
+@deftypefn Proc ISC_STATUS isc_rollback_transaction status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle
 
 Aborts a transaction; any changes that would have been made inside of it are not made. The database remains unchanged.
 @end deftypefn
 
 @anchor{isc_commit_transaction}
-@deftypefn Function ISC_STATUS isc_commit_transaction status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle
+@deftypefn Proc ISC_STATUS isc_commit_transaction status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle
 
 Commits a transaction; any changes that would have been made inside of it are now made if possible.  Should an error occur while trying to commit any data, @emph{none} of the changes will be made.
 @end deftypefn
@@ -93,7 +93,7 @@ An immediate query is one where its @dfn{statement} is prepared, executed, and d
 An immediate query only means a statement is not prepared in advance. It does @emph{not} mean the statement bypasses any pending transactions.
 @end quotation
 
-@deftypefn Function ISC_STATUS isc_dsql_execute_immediate status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA = nil
+@deftypefn Proc ISC_STATUS isc_dsql_execute_immediate status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
 
 Runs a statement that does not return data.
 
@@ -102,7 +102,7 @@ If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute_immediate()}
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_dsql_exec_immed2 status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil
+@deftypefn Proc ISC_STATUS isc_dsql_exec_immed2 status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil
 
 Runs a statement which returns no more than a single row of results.
 
@@ -114,7 +114,7 @@ Runs a statement which returns no more than a single row of results.
 
 @subsection Lifecycle
 
-@deftypefn Function ISC_STATUS isc_dsql_allocate_statement status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle; autofree: bool = true
+@deftypefn Proc ISC_STATUS isc_dsql_allocate_statement status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle; autofree: bool = true
 
 Allocates a handle for a prepared statement. @var{autofree} statements are cleaned up when their database is detached, otherwise you must clean up the handle manually.
 
@@ -122,7 +122,7 @@ Allocates a handle for a prepared statement. @var{autofree} statements are clean
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_alloc_statement2()}
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_dsql_free_statement status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; on_free: StatementFreeType
+@deftypefn Proc ISC_STATUS isc_dsql_free_statement status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; on_free: StatementFreeType
 
 Explicitly frees a previously allocated statement.  Not necessary for statements created with @var{autofree = true}.
 
@@ -157,12 +157,12 @@ Like unprepare, but the handle is destroyed after the statement is unprepared.
 @subsection Preparation
 
 @anchor{isc_dsql_prepare}
-@deftypefn Function ISC_STATUS isc_dsql_prepare status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; statement_handle: var isc_stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
+@deftypefn Proc ISC_STATUS isc_dsql_prepare status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; statement_handle: var isc_stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
 @end deftypefn
 
 @subsection Execution
 
-@deftypefn Function ISC_STATUS isc_dsql_execute status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
+@deftypefn Proc ISC_STATUS isc_dsql_execute status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
 Runs a previously prepared statement.  @xref{isc_dsql_prepare}@.
 
 @var{inx} may be left out, or @code{nil}, if a statement has no placeholders.  Statements with placeholders must be given a valid @code{XSQLDA} in the @var{inx} parameter.  @var{inx} contains the input values to replace each placeholder with.
@@ -174,17 +174,38 @@ Runs a previously prepared statement.  @xref{isc_dsql_prepare}@.
 @node User Management
 @chapter User Management
 
-@deftypefn Function ISC_STATUS isc_add_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
+@deftypefn Proc ISC_STATUS isc_add_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_delete_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
+@deftypefn Proc ISC_STATUS isc_delete_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_modify_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
+@deftypefn Proc ISC_STATUS isc_modify_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
 @end deftypefn
 
-@node Index of Functions
-@appendix Index of Functions
+@node XSQLDA
+@chapter XSQLDA
+
+@deftypefn Template int XSQLDA_LENGTH n: int
+Returns the amount of memory which must be allocated to store an @code{XSQLDA} object with @var{n} variables.
+@end deftypefn
+
+@anchor{create_xsqlda}
+@deftypefn Proc PXSQLDA create_xsqlda vars: int
+Allocates a new @code{XSQLDA} in unmanaged memory, with enough slots for @var{vars} variables.  Must be freed manually, @xref{free_xsqlda}@.
+@end deftypefn
+
+@anchor{free_xsqlda}
+@deftypefn Proc void free_xsqlda self: PXSQLDA
+Frees an @code{XSQLDA} that was previously allocated.  @xref{create_xsqlda}@.
+@end deftypefn
+
+@deftypefn Proc PXSQLVAR [] self: PXSQLDA; index: int
+Accesses the @var{index}'th variable within the @code{XSQLDA} object.  Assertions perform range checking in debug builds.  As a pointer is returned, changes to the result equal changes in the original @code{XSQLDA} object.  It goes without saying that values returned by this indexer do not live past the @code{XSQLDA} that they were taken from.
+@end deftypefn
+
+@node Index of Procs
+@appendix Index of Procs
 
 @printindex fn
 
