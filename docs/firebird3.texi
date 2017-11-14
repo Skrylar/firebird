@@ -154,6 +154,23 @@ Like unprepare, but the handle is destroyed after the statement is unprepared.
 
 @end deftypefn
 
+@subsection Preparation
+
+@anchor{isc_dsql_prepare}
+@deftypefn Function ISC_STATUS isc_dsql_prepare status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; statement_handle: var isc_stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
+@end deftypefn
+
+@subsection Execution
+
+@deftypefn Function ISC_STATUS isc_dsql_execute status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
+Runs a previously prepared statement.  @xref{isc_dsql_prepare}@.
+
+@var{inx} may be left out, or @code{nil}, if a statement has no placeholders.  Statements with placeholders must be given a valid @code{XSQLDA} in the @var{inx} parameter.  @var{inx} contains the input values to replace each placeholder with.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute()}@sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute2()}
+@end deftypefn
+
 @node User Management
 @chapter User Management
 

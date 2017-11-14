@@ -365,8 +365,9 @@ proc isc_dsql_exec_immed2_inner(status: var; db: var; transaction: var; statemen
 proc isc_dsql_exec_immed2*(status: var; db: var; transaction: var; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): ISC_STATUS {.inline, discardable.} =
   result = isc_dsql_exec_immed2_inner(status, db, transaction, 0, statement, dialect, inx, outx)
 
-# TODO ISC_STATUS isc_dsql_execute(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, isc_stmt_handle*, unsigned short, const XSQLDA*);
-# TODO ISC_STATUS isc_dsql_execute2(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, isc_stmt_handle*, unsigned short, const XSQLDA*, const XSQLDA*);
+proc isc_dsql_execute*(status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): ISC_STATUS {.importc, header: ibase_h.}
+
+proc isc_dsql_execute*(status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): ISC_STATUS {.importc: "isc_dsql_execute2", header: ibase_h.}
 
 proc isc_dsql_execute_immediate(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; length: cushort; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): ISC_STATUS {.importc, header: ibase_h.}
 
@@ -382,7 +383,12 @@ proc isc_dsql_free_statement*(status: ref ISC_STATUS_ARRAY; statement: var isc_s
   result = isc_dsql_free_statement_inner(status, statement, on_free.cushort)
 
 # TODO ISC_STATUS isc_dsql_insert(status: ref ISC_STATUS_ARRAY, isc_stmt_handle*, unsigned short, XSQLDA*);
-# TODO ISC_STATUS isc_dsql_prepare(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, isc_stmt_handle*, unsigned short, const cstring, unsigned short, XSQLDA*);
+
+proc isc_dsql_prepare_inner(status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; statement_handle: var isc_stmt_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA): ISC_STATUS {.importc: "isc_dsql_prepare", header: ibase_h.}
+
+proc isc_dsql_prepare*(status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; statement_handle: var isc_stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA): ISC_STATUS {.inline.} =
+  result = isc_dsql_prepare_inner(status, transaction, statement_handle, 0, statement, dialect, xsql)
+
 # TODO ISC_STATUS isc_dsql_set_cursor_name(status: ref ISC_STATUS_ARRAY, isc_stmt_handle*, const cstring, unsigned short);
 # TODO ISC_STATUS isc_dsql_sql_info(status: ref ISC_STATUS_ARRAY, isc_stmt_handle*, short, const cstring, short, cstring);
 # TODO void isc_encode_date(const pointer, ISC_QUAD*);
