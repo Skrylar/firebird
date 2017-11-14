@@ -84,6 +84,15 @@ Commits a transaction; any changes that would have been made inside of it are no
 @node Running queries
 @chapter Running queries
 
+@anchor{Immediate Queries}
+@section Immediate Queries
+
+An immediate query is one where its @dfn{statement} is prepared, executed, and deleted, in one call. A query which is run very infrequently or prepares a database might be run immediately. For queries that are going to be run many times within an application's lifecycle, refer to @ref{Prepared Queries}.  Immediate queries also do not allow values to be @dfn{bound} to placeholders and so are unsuitable for any query which accepts information from untrusted sources.
+
+@quotation Note
+An immediate query only means a statement is not prepared in advance. It does @emph{not} mean the statement bypasses any pending transactions.
+@end quotation
+
 @deftypefn Function ISC_STATUS isc_dsql_execute_immediate status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA = nil
 
 Runs a statement that does not return data.
@@ -93,23 +102,36 @@ If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute_immediate()}
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_dsql_exec_immed2 status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; transaction: ref isc_tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil
+@deftypefn Function ISC_STATUS isc_dsql_exec_immed2 status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil
 
 Runs a statement which returns no more than a single row of results.
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_exec_immed2()}
 @end deftypefn
 
-@node User management
-@chapter User management
+@anchor{Prepared Queries}
+@section Prepared Queries
 
-@deftypefn Function ISC_STATUS isc_add_user @var{status}: ref ISC_STATUS_ARRAY; data: ref USER_SEC_DATA
+@subsection Lifecycle
+
+@deftypefn Function ISC_STATUS isc_dsql_allocate_statement status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle; autofree: bool = true
+
+Allocates a handle for a prepared statement. @var{autofree} statements are cleaned up when their database is detached, otherwise you must clean up the handle manually.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_allocate_statement()}@sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_alloc_statement2()}
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_delete_user @var{status}: ref ISC_STATUS_ARRAY; data: ref USER_SEC_DATA
+@node User Management
+@chapter User Management
+
+@deftypefn Function ISC_STATUS isc_add_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
 @end deftypefn
 
-@deftypefn Function ISC_STATUS isc_modify_user @var{status}: ref ISC_STATUS_ARRAY; data: ref USER_SEC_DATA
+@deftypefn Function ISC_STATUS isc_delete_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
+@end deftypefn
+
+@deftypefn Function ISC_STATUS isc_modify_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
 @end deftypefn
 
 @node Index of Functions
