@@ -393,8 +393,9 @@ proc isc_dsql_allocate_statement*(status: ref ISC_STATUS_ARRAY; db: ref isc_db_h
   else:
     result = isc_dsql_alloc_statement2_inner(status, db, statement)
 
-# TODO ISC_STATUS isc_dsql_describe(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, XSQLDA *);
-# TODO ISC_STATUS isc_dsql_describe_bind(status: ref ISC_STATUS_ARRAY, isc_stmt_handle *, unsigned short, XSQLDA *);
+proc isc_dsql_describe*(status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA): ISC_STATUS {.importc, header: ibase_h.}
+
+proc isc_dsql_describe_bind*(status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA): ISC_STATUS {.importc, header: ibase_h.}
 
 proc isc_dsql_exec_immed2_inner(status: var; db: var; transaction: var; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): ISC_STATUS {.importc: "isc_dsql_exec_immed2", header: ibase_h.}
 

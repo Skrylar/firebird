@@ -161,6 +161,31 @@ Like unprepare, but the handle is destroyed after the statement is unprepared.
 @deftypefn Proc ISC_STATUS isc_dsql_prepare status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; statement_handle: var isc_stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
 @end deftypefn
 
+Statements may contain placeholders, which are specified with the @code{?} (question mark) character.  Use of placeholders prevents SQL injection attacks.  To use placeholders, you must prepare an @code{XSQLDA} object to contain the values which are going in to the placeholder's positions.  For example the following:
+
+@example
+isc_dsql_prepare(status, transaction, statement,
+  "INSERT INTO things VALUES(bees=?)")
+@end example
+
+Prepares a statement with a single placeholder: the value assigned to the @samp{bees} column of the new row.  You must then create an XSQLDA with a single variable; whatever this variable is assigned to, is whatever value is (safely) inserted where the first question mark goes.  Multiple question marks are allowed and are numbered sequentially.
+
+@subsection Describing
+
+Firebird can analyze a prepared statement and return information about either the values which will be returned from a @code{SELECT} statement, or the placeholders for an @code{INSERT} statement.
+
+@deftypefn Proc ISC_STATUS isc_dsql_describe status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
+Analyzes the prepared @var{statement}, and stores the necessary variable definitions for data coming out of the database in @var{outx}.
+
+@cite{Firebird 3.0's example/api/api4.c file}
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_dsql_describe_bind(status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA)
+Analyzes the prepared @var{statement}, and stores the necessary variable definitions for data going from the program to the query's placeholders in @var{inx}.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_describe_bind()}
+@end deftypefn
+
 @subsection Execution
 
 @deftypefn Proc ISC_STATUS isc_dsql_execute status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
