@@ -289,6 +289,15 @@ type
 template XSQLDA_LENGTH*(n: int): int =
   XSQLDA.sizeof + ((n - 1) * XSQLVAR.sizeof)
 
+proc `[]`* (self: PXSQLDA; index: int): PXSQLVAR =
+  # bounds checking
+  assert index >= 0
+  assert index < self.sqln
+  # return the thing
+  var x = cast[int](unsafeaddr self.sqlvar[0])
+  inc x, (XSQLVAR.sizeof) * index
+  result = cast[PXSQLVAR](x)
+
 proc make_xsqlda*(vars: int): PXSQLDA =
   result = cast[PXSQLDA](alloc(XSQLDA_LENGTH(vars)))
   result.version = SQLDA_VERSION1
@@ -308,15 +317,6 @@ proc free_xsqlda*(self: PXSQLDA; dealloc_children: bool = true) =
         dealloc(here.sqlind)
   # now ditch the object
   dealloc(self)
-
-proc `[]`* (self: PXSQLDA; index: int): PXSQLVAR =
-  # bounds checking
-  assert index >= 0
-  assert index < self.sqln
-  # return the thing
-  var x = cast[int](unsafeaddr self.sqlvar[0])
-  inc x, (XSQLVAR.sizeof) * index
-  result = cast[PXSQLVAR](x)
 
 #define XSQLDA_LENGTH(n)        (sizeof (XSQLDA) + (n - 1) * sizeof (XSQLVAR))
 
