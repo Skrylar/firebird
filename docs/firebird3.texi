@@ -172,6 +172,20 @@ Runs a previously prepared statement.  @xref{isc_dsql_prepare}@.
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute2()}
 @end deftypefn
 
+@subsection Extraction
+
+@deftypefn Proc ISC_STATUS isc_dsql_fetch status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
+Retrieves the next row of results from an executed query.  Values are read in to @var{outx}.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_fetch()}
+@end deftypefn
+
+@section SQL Codes
+
+@deftypefn Proc ISC_LONG isc_sqlcode const status: ref ISC_STATUS_ARRAY
+Returns the SQL Code from the @var{status} error vector.  SQL Codes are set from actions such as executing statements.  Codes represent special situations such as failing to insert new rows due to constraint violations.
+@end deftypefn
+
 @node User Management
 @chapter User Management
 
