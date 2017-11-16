@@ -205,6 +205,18 @@ Retrieves the next row of results from an executed query.  Values are read in to
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_fetch()}
 @end deftypefn
 
+@section Unfiled
+
+@deftypefn Proc ISC_STATUS isc_dsql_sql_info status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; item_length: cshort; item: cstring; blen: cshort; buf: cstring
+Retrieves information about a prepared SQL statement.
+
+@quotation Note
+This could be better documented, but I have no idea what the parameters are or how they work.
+@end quotation
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_sql_info()}
+@end deftypefn
+
 @section SQL Codes
 
 @deftypefn Proc ISC_LONG isc_sqlcode const status: ref ISC_STATUS_ARRAY
