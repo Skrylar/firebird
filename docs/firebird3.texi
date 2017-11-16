@@ -308,7 +308,9 @@ A value is @code{NULL} in SQL terms.
 @node Blobs
 @chapter Blobs
 
-@section Lifecycle
+@section Functions
+
+@subsection Lifecycle
 
 You need to @dfn{create} a blob if creating a new one, or @dfn{open} an existing blob to read from it.
 
@@ -356,7 +358,7 @@ A handle to a blob previously opened by @code{isc_open_blob}.
 
 @cite{Firebird 3.0's example/api/api@{7,8@}.c files}
 
-@section Retrieval
+@subsection Retrieval
 
 @deftypefn Proc ISC_STATUS isc_get_segment status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle; read_len: var cushort; blen: cushort; buf: ptr int8
 Reads the next @var{blen} bytes of data from a @var{blob}, storing the results in @var{buf} and returning the actual number of bytes read to @var{read_len}.
@@ -365,7 +367,7 @@ Reads the next @var{blen} bytes of data from a @var{blob}, storing the results i
 @cite{Firebird 3.0's example/api/api7.c files}@sp 0
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_get_segment()}
 
-@section Storage
+@subsection Storage
 
 @anchor{isc_put_segment}
 @deftypefn Proc ISC_STATUS isc_put_segment status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle; blen: cushort; buf: ptr int8
@@ -442,6 +444,50 @@ These types take a raw pointer to memory, where text is stored.  The @var{sqllen
 @end quotation
 
 @cite{Firebird 3.0's example/api/*.c files}
+
+@node Cursors
+@chapter Cursors
+
+@deftypefn Proc ISC_STATUS isc_dsql_set_cursor_name status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; name: cstring; unused: cushort = 0
+Sets the cursor @var{name} for a given @var{statement}.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_set_cursor_name()}
+@end deftypefn
+
+@node Arrays
+@chapter Arrays
+
+@deftypefn Proc ISC_STATUS isc_array_lookup_bounds status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; table_name, column_name: cstring; desc: var ISC_ARRAY_DESC
+
+@cite{Firebird 3.0's example/api/api10.c files}@sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_array_lookup_bounds2()}
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_array_get_slice status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var ISC_LONG
+Writes @var{buflen} bytes from the buffer @var{buf} to the array with handle @var{array_id} and described by @var{desc}.  The number of bytes actually written is written back to @var{buflen}.
+
+@cite{Firebird 3.0's example/api/api10.c files}@sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_array_get_slice2()}
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_array_put_slice status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var ISC_LONG
+Reads @var{buflen} bytes in to buffer @var{buf} from the array with a handle @var{array_id} and a description @var{desc}.  The number of bytes actually read is written back to @var{buflen}.
+
+@cite{Firebird 3.0's example/api/api10.c files}@sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_array_put_slice2()}
+@end deftypefn
+
+@node Silliness with Numbers
+@chapter Silliness with Numbers
+
+@deftypefn Proc ISC_LONG isc_vax_integer buf: pointer; size: cshort
+@deftypefnx Proc ISC_INT64 isc_portable_integer buf: pointer; size: cshort
+
+Flips the byte order of numbers, converting them from little-endian to big-endian and vice versa.  @var{buf} is a pointer to the number being converted, while @var{size} is the number of bytes for the integer type.  @code{isc_vax_integer} supports lengths of 1, 2 and 4 bytes.  @code{isc_portable_integer} supports lengths of 1, 2, 4 and 8 bytes.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_vax_integer()} @sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_portable_integer()}
+@end deftypefn
 
 @node Index of Procs
 @appendix Index of Procs

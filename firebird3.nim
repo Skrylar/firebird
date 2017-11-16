@@ -357,11 +357,16 @@ proc isc_attach_database*(status_vector: var ISC_STATUS_ARRAY; db_name: cstring;
   result = isc_attach_database(status_vector, 0, db_name, db, parm_buffer_length, parm_buffer)
 
 # TODO ISC_STATUS isc_array_gen_sdl(status: ref ISC_STATUS_ARRAY, const ISC_ARRAY_DESC*, ISC_SHORT*, ISC_UCHAR*, ISC_SHORT*);
-# TODO ISC_STATUS isc_array_get_slice(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, ISC_QUAD*, const ISC_ARRAY_DESC*, pointer, ISC_LONG*);
-# TODO ISC_STATUS isc_array_lookup_bounds(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, const cstring, const cstring, ISC_ARRAY_DESC*);
+
+proc isc_array_get_slice*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var ISC_LONG): ISC_STATUS {.importc, header: ibase_h.}
+
+proc isc_array_lookup_bounds*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; table_name, column_name: cstring; desc: var ISC_ARRAY_DESC): ISC_STATUS {.importc, header: ibase_h.}
+
 # TODO ISC_STATUS isc_array_lookup_desc(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, const cstring, const cstring, ISC_ARRAY_DESC*);
 # TODO ISC_STATUS isc_array_set_desc(status: ref ISC_STATUS_ARRAY, const cstring, const cstring, const short*, const short*, const short*, ISC_ARRAY_DESC*);
-# TODO ISC_STATUS isc_array_put_slice(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, ISC_QUAD*, const ISC_ARRAY_DESC*, pointer, ISC_LONG *);
+
+proc isc_array_put_slice*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var ISC_LONG): ISC_STATUS {.importc, header: ibase_h.}
+
 # TODO void isc_blob_default_desc(ISC_BLOB_DESC*, const ISC_UCHAR*, const ISC_UCHAR*);
 # TODO ISC_STATUS isc_blob_gen_bpb(status: ref ISC_STATUS_ARRAY, const ISC_BLOB_DESC*, const ISC_BLOB_DESC*, unsigned short, ISC_UCHAR*, unsigned short*);
 # TODO ISC_STATUS isc_blob_info(status: ref ISC_STATUS_ARRAY, isc_blob_handle*, short, const cstring, short, cstring);
@@ -432,7 +437,8 @@ proc isc_dsql_prepare_inner(status: var ISC_STATUS_ARRAY; transaction: var isc_t
 proc isc_dsql_prepare*(status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; statement_handle: var isc_stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA): ISC_STATUS {.inline.} =
   result = isc_dsql_prepare_inner(status, transaction, statement_handle, 0, statement, dialect, xsql)
 
-# TODO ISC_STATUS isc_dsql_set_cursor_name(status: ref ISC_STATUS_ARRAY, isc_stmt_handle*, const cstring, unsigned short);
+proc isc_dsql_set_cursor_name*(status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; name: cstring; unused: cushort = 0): ISC_STATUS {.importc, header: ibase_h.}
+
 # TODO ISC_STATUS isc_dsql_sql_info(status: ref ISC_STATUS_ARRAY, isc_stmt_handle*, short, const cstring, short, cstring);
 # TODO void isc_encode_date(const pointer, ISC_QUAD*);
 # TODO void isc_encode_sql_date(const pointer, ISC_DATE*);
@@ -479,8 +485,9 @@ proc isc_sqlcode*(status: ref ISC_STATUS_ARRAY): ISC_LONG {.importc, header: iba
 # TODO void isc_sql_interprete(short, cstring, short);
 # TODO ISC_STATUS isc_transaction_info(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, short, const cstring, short, cstring);
 # TODO ISC_STATUS isc_transact_request(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, unsigned short, cstring, unsigned short, cstring, unsigned short, cstring);
-# TODO ISC_LONG isc_vax_integer(const cstring, short);
-# TODO ISC_INT64 isc_portable_integer(const ISC_UCHAR*, short);
+
+proc isc_vax_integer*(buf: pointer; size: cshort): ISC_LONG {.importc, header: ibase_h.}
+proc isc_portable_integer*(buf: pointer; size: cshort): ISC_INT64 {.importc, header: ibase_h.}
 
 #* Security Functions and structures */
 #*************************************/
