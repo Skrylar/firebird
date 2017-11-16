@@ -312,8 +312,10 @@ A value is @code{NULL} in SQL terms.
 
 You need to @dfn{create} a blob if creating a new one, or @dfn{open} an existing blob to read from it.
 
-@deftypefn Proc ISC_STATUS isc_create_blob(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD)
+@deftypefn Proc ISC_STATUS isc_create_blob status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD[; bpb_len: cshort; bpb: cstring]
 Creates a new blob in the database handled by @var{db}, in a @var{transaction}, storing a handle to the newly created blob in @var{blob} and returning the blob's ID in @var{blob_id}.  You need the @var{blob} handle to write to it (@pxref{isc_put_segment}) and the @var{blob_id} to pass this blob to records via an @code{XSQLVAR}.
+
+It is also possible to provide a @emph{blob parameter buffer}.  Supply the length of the buffer in @var{bpb_len} and the buffer itself in @var{bpb}.  If these two values are not provided, it is assumed there are no special parameters.
 @end deftypefn
 
 @deftypefn Proc ISC_STATUS isc_open_blob status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD

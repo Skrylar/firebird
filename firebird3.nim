@@ -377,7 +377,8 @@ proc isc_commit_transaction*(status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle
 
 proc isc_create_blob*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD): ISC_STATUS {.importc, header: ibase_h.}
 
-# TODO ISC_STATUS isc_create_blob2(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, isc_blob_handle*, ISC_QUAD*, short, const cstring);
+proc isc_create_blob*(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD; bpb_len: cshort; bpb: cstring): ISC_STATUS {.importc: "isc_create_blob2", header: ibase_h.}
+
 # TODO ISC_STATUS isc_create_database(status: ref ISC_STATUS_ARRAY, short, const cstring, db: ref isc_db_handle, short, const cstring, short);
 # TODO ISC_STATUS isc_database_info(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, short, const cstring, short, cstring);
 # TODO void isc_decode_date(const ISC_QUAD*, pointer);
