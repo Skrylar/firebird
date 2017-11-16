@@ -308,6 +308,8 @@ A value is @code{NULL} in SQL terms.
 @node Blobs
 @chapter Blobs
 
+Blobs allow you to store data of varying length within a Firebird database.  Depending on the blob's sub-type, they are similar to ``blob'' types in other databases or ``text'' blocks in Postgres.
+
 @section Functions
 
 @subsection Lifecycle
@@ -487,6 +489,42 @@ Flips the byte order of numbers, converting them from little-endian to big-endia
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_vax_integer()} @sp 0
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_portable_integer()}
+@end deftypefn
+
+@node Events
+@chapter Events
+
+@section Functions
+
+@deftypefn Proc ISC_LONG isc_event_block event_buf, result_buf: var cstring; name_count: cushort, ...
+Creates two parameter buffers and returns them via @var{event_buf} and @var{result_buf}.
+
+This function accepts a variable number of arguments.  Specify the number of event names in @var{name_count}, then provide @code{cstring}s equal in number to @var{name_count}.  Note that @var{name_count} cannot exceed fifteen@footnote{This restriction is inferred from Embarcadero's documentation; whether the limitation also exists in Firebird is unknown.}.
+
+@cite{Firebird 3.0's example/api/api16.c files}@sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_event_block()}
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_que_events status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var ISC_LONG; eblen: cshort; eb: cstring; cb: ISC_EVENT_CALLBACK; userdata: pointer
+Registers asynchronous event listeners with database @var{db}.  An ID referring to these listeners is written to @var{event_id}, which may then be used in other procs to ex. cancel the events later on.  @var{eblen} is the length of the event parameter buffer, and @var{eb} is the event parameter buffer.
+
+@cite{Firebird 3.0's example/api/api16.c files}@sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_que_events()}
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_cancel_events status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var ISC_LONG
+Cancels all event listeners registered to @var{event_id}.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_cancel_events()}
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_wait_for_event status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eb_len: cshort; event_buf, result_buf: cstring
+
+Subscribes to a notification, similar to @code{isc_que_events}. Unlike @code{isc_que_events} the call will block until one of the interested events has fired.
+
+@var{eb_len} is the length of the event parameter buffer, which itself is provided through the @var{event_buf} parameter.  The result parameter buffer is written to @var{result_buf}.  As usual both buffers are expected to have been created by @code{isc_event_block}.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_wait_for_event()}
 @end deftypefn
 
 @node Index of Procs

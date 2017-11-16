@@ -373,7 +373,8 @@ proc isc_array_put_slice*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; t
 # TODO ISC_STATUS isc_blob_lookup_desc(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, const ISC_UCHAR*, const ISC_UCHAR*, ISC_BLOB_DESC*, ISC_UCHAR*);
 # TODO ISC_STATUS isc_blob_set_desc(status: ref ISC_STATUS_ARRAY, const ISC_UCHAR*, const ISC_UCHAR*, short, short, short, ISC_BLOB_DESC*);
 # TODO ISC_STATUS isc_cancel_blob(status: ref ISC_STATUS_ARRAY, isc_blob_handle *);
-# TODO ISC_STATUS isc_cancel_events(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, ISC_LONG *);
+
+proc isc_cancel_events*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var ISC_LONG): ISC_STATUS {.importc, header: ibase_h.}
 
 proc isc_close_blob*(status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle): ISC_STATUS {.importc, header: ibase_h.}
 
@@ -444,7 +445,9 @@ proc isc_dsql_set_cursor_name*(status: var ISC_STATUS_ARRAY; statement: var isc_
 # TODO void isc_encode_sql_date(const pointer, ISC_DATE*);
 # TODO void isc_encode_sql_time(const pointer, ISC_TIME*);
 # TODO void isc_encode_timestamp(const pointer, ISC_TIMESTAMP*);
-# TODO ISC_LONG ISC_EXPORT_VARARG isc_event_block(ISC_UCHAR**, ISC_UCHAR**, ISC_USHORT, ...);
+
+proc isc_event_block*(event_buf, result_buf: var cstring; name_count: cushort): ISC_LONG {.importc, header: ibase_h, varargs.}
+
 # TODO ISC_USHORT isc_event_block_a(cstring*, cstring*, ISC_USHORT, cstring*);
 # TODO void isc_event_block_s(cstring*, cstring*, ISC_USHORT, cstring*, ISC_USHORT*);
 # TODO void isc_event_counts(ISC_ULONG*, short, ISC_UCHAR*, const ISC_UCHAR *);
@@ -466,7 +469,9 @@ proc isc_open_blob*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transac
 proc isc_put_segment*(status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle; blen: cushort; buf: ptr int8): ISC_STATUS {.importc, header: ibase_h.}
 
 # TODO ISC_STATUS isc_put_slice(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, ISC_QUAD*, short, const cstring, short, const ISC_LONG*, ISC_LONG, pointer);
-# TODO ISC_STATUS isc_que_events(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, ISC_LONG*, short, const ISC_UCHAR*, ISC_EVENT_CALLBACK, pointer);
+
+proc isc_que_events*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var ISC_LONG; eblen: cshort; eb: cstring; cb: ISC_EVENT_CALLBACK; userdata: pointer): ISC_STATUS {.importc, header: ibase_h.}
+
 # TODO ISC_STATUS isc_rollback_retaining(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle);
 proc isc_rollback_transaction*(status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
 # TODO ISC_STATUS isc_start_multiple(status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle, short, void *);
@@ -544,7 +549,8 @@ proc isc_modify_user*(status: ref ISC_STATUS_ARRAY; data: ref USER_SEC_DATA): IS
 # TODO ISC_STATUS isc_start_and_send(status: ref ISC_STATUS_ARRAY, isc_req_handle*, transaction: ref isc_tr_handle, short, short, const pointer, short);
 # TODO ISC_STATUS isc_start_request(status: ref ISC_STATUS_ARRAY, isc_req_handle *, isc_tr_handle *, short);
 # TODO ISC_STATUS isc_unwind_request(status: ref ISC_STATUS_ARRAY, isc_tr_handle *, short);
-# TODO ISC_STATUS isc_wait_for_event(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, short, const ISC_UCHAR*, ISC_UCHAR*);
+
+proc isc_wait_for_event*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eb_len: cshort; event_buf, result_buf: cstring): ISC_STATUS {.importc, header: ibase_h.}
 
 #* Other Sql functions       */
 #*****************************/
