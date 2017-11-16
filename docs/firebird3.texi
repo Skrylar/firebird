@@ -273,25 +273,15 @@ An @code{XSQLVAR} can represent either a variable going in to the database via a
 @item sqltype
 The expected SQL type (when describing inputs to a prepared statement), the SQL type actually provided (when providing parameters to a prepared statement), or the data type returned by a query (when receiving data from the database.)
 
+When assigning a data type to this field, add one to the type.  For example @code{SQL_TEXT + 1}.
+
 @xref{SQL Data Types}@.
 
+@anchor{sqlsubtype}
 @item sqlsubtype
 Subtypes provide more information about a kind of thing.  For example, some blobs represent different types of information.  The subtype field tells you what kind of information is stored in the bob.
 
-In the case of @code{SQL_BLOB}, the subtypes are as follows:
-@table @samp
-@item 0
-Binary data.
-
-@item 1
-Text.
-
-@item 2
-BLR (internal Firebird stuff).
-
-@end table
-
-@cite{http://www.firebirdfaq.org/faq165/}
+In the case of @code{SQL_BLOB}, see @ref{blob subtypes}@.
 
 @item sqllen
 The number of bytes available in @var{sqldata} to read or write to.  Adjust this to either the @code{sizeof} a type (when using numeric types) or the available space in a text buffer when dealing with strings.
@@ -314,6 +304,81 @@ A value is @code{NULL} in SQL terms.
 @end vtable
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/XSQLVAR_Field_Descriptions}
+
+@node Blobs
+@chapter Blobs
+
+@section Lifecycle
+
+@deftypefn Proc ISC_STATUS isc_open_blob status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD
+
+@table @var
+@item status
+A reference to a status error vector.
+
+@item isc_db_handle
+A handle to the database containing the blob you are opening.
+
+@item isc_tr_handle
+
+@item blob
+A handle which will represent the opened blob.  It will be assigned to on a successful call to @code{isc_open_blob}.
+
+@item blob_id
+Identifies a blob to open from the database.
+
+@end table
+
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_close_blob status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle
+
+@table @var
+@item status
+A reference to a status error vector.
+
+@item blob
+A handle to a blob previously opened by @code{isc_open_blob}.
+
+@end table
+
+@end deftypefn
+
+@cite{Firebird 3.0's example/api/api7.c files}
+
+@section Retrieval
+
+@deftypefn Proc ISC_STATUS isc_get_segment status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle; read_len: var cushort; blen: cushort; buf: ptr int8
+Reads the next @var{blen} bytes of data from a @var{blob}, storing the results in @var{buf} and returning the actual number of bytes read to @var{read_len}.
+@end deftypefn
+
+@cite{Firebird 3.0's example/api/api7.c files}@sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_get_segment()}
+
+@section Storage
+
+@deftypefn Proc ISC_STATUS isc_put_segment status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle; blen: cushort; buf: ptr int8
+Writes @var{blen} bytes of data from @var{buf} to a given @var{blob}.
+@end deftypefn
+
+@section Subtypes
+
+A blob's sub-type is stored in the @code{sqlsubtype} parameter of an @code{XSQLVAR}, and determines what kind of data is stored and what SQL commands are available.  @xref{sqlsubtype}@.
+
+@anchor{blob subtypes}
+@table @samp
+@item 0
+Binary data.
+
+@item 1
+Text.
+
+@item 2
+BLR (internal Firebird stuff).
+
+@end table
+
+@cite{http://www.firebirdfaq.org/faq165/}
 
 @node SQL Data Types
 @chapter SQL Data Types
@@ -358,6 +423,8 @@ As Firebird's documentation is lacking on which specific types match up to which
 @end multitable
 
 @var{SQL_DATE} is synonymous with @var{SQL_TIMESTAMP}.
+
+@code{SQL_BLOB} has multiple sub-types, see @ref{blob subtypes}@.
 
 @quotation Memory buffer
 These types take a raw pointer to memory, where text is stored.  The @var{sqllen} field of an @code{XSQLVAR} is used to determine how long the buffer must be (when receiving data) or actually is (when sending data.)  @xref{XSQLVAR}@.
