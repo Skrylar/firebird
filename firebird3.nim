@@ -374,7 +374,9 @@ proc isc_close_blob*(status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle): I
 
 # TODO ISC_STATUS isc_commit_retaining(status: ref ISC_STATUS_ARRAY, isc_tr_handle *);
 proc isc_commit_transaction*(status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
-# TODO ISC_STATUS isc_create_blob(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, isc_blob_handle*, ISC_QUAD*);
+
+proc isc_create_blob*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD): ISC_STATUS {.importc, header: ibase_h.}
+
 # TODO ISC_STATUS isc_create_blob2(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, transaction: ref isc_tr_handle, isc_blob_handle*, ISC_QUAD*, short, const cstring);
 # TODO ISC_STATUS isc_create_database(status: ref ISC_STATUS_ARRAY, short, const cstring, db: ref isc_db_handle, short, const cstring, short);
 # TODO ISC_STATUS isc_database_info(status: ref ISC_STATUS_ARRAY, db: ref isc_db_handle, short, const cstring, short, cstring);

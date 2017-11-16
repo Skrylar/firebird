@@ -310,6 +310,12 @@ A value is @code{NULL} in SQL terms.
 
 @section Lifecycle
 
+You need to @dfn{create} a blob if creating a new one, or @dfn{open} an existing blob to read from it.
+
+@deftypefn Proc ISC_STATUS isc_create_blob(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD)
+Creates a new blob in the database handled by @var{db}, in a @var{transaction}, storing a handle to the newly created blob in @var{blob} and returning the blob's ID in @var{blob_id}.  You need the @var{blob} handle to write to it (@pxref{isc_put_segment}) and the @var{blob_id} to pass this blob to records via an @code{XSQLVAR}.
+@end deftypefn
+
 @deftypefn Proc ISC_STATUS isc_open_blob status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD
 
 @table @var
@@ -331,6 +337,8 @@ Identifies a blob to open from the database.
 
 @end deftypefn
 
+When you are done with a blob, whether created or opened, you will need to @dfn{close} it.
+
 @deftypefn Proc ISC_STATUS isc_close_blob status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle
 
 @table @var
@@ -344,7 +352,7 @@ A handle to a blob previously opened by @code{isc_open_blob}.
 
 @end deftypefn
 
-@cite{Firebird 3.0's example/api/api7.c files}
+@cite{Firebird 3.0's example/api/api@{7,8@}.c files}
 
 @section Retrieval
 
@@ -357,6 +365,7 @@ Reads the next @var{blen} bytes of data from a @var{blob}, storing the results i
 
 @section Storage
 
+@anchor{isc_put_segment}
 @deftypefn Proc ISC_STATUS isc_put_segment status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle; blen: cushort; buf: ptr int8
 Writes @var{blen} bytes of data from @var{buf} to a given @var{blob}.
 @end deftypefn
