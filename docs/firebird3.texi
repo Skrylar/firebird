@@ -39,7 +39,7 @@ To interact with a database in Firebird you must @dfn{attach} one.  A successful
 
 @section Functions
 
-@deftypefn Proc ISC_STATUS isc_attach_database @var{status_vector}: ref ISC_STATUS_ARRAY; @var{db_name}: cstring; @var{db}: ref isc_db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
+@deftypefn Proc ISC_STATUS isc_attach_database @var{status_vector}: var ISC_STATUS_ARRAY; @var{db_name}: cstring; @var{db}: var isc_db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
 
 Attaches a new database.
 
@@ -64,7 +64,7 @@ A specially constructed string, which acts as a set of parameters for the databa
 
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_detach_database @var{status}: ref ISC_STATUS, @var{db}: ref isc_db_handle)
+@deftypefn Proc ISC_STATUS isc_detach_database @var{status}: var ISC_STATUS, @var{db}: var isc_db_handle)
 
 Releases a previously attached database.
 
@@ -96,7 +96,7 @@ All changes in the transaction are aborted; the database will remain in the stat
 
 @section Functions
 
-@deftypefn Proc ISC_STATUS isc_start_transaction @var{status}: ref ISC_STATUS_ARRAY; @var{transaction}: ref isc_tr_handle; @var{db}: var isc_db_handle; @var{tpb_length}: cushort; @var{tpb}: cstring
+@deftypefn Proc ISC_STATUS isc_start_transaction @var{status}: var ISC_STATUS_ARRAY; @var{transaction}: var isc_tr_handle; @var{db}: var isc_db_handle; @var{tpb_length}: cushort; @var{tpb}: cstring
 
 Starts a new transaction, storing a handle to the transaction within @var{transaction}. The database in question is specified with the handle @var{db}. If a transaction parameter buffer is used, its length and string are supplied. The nimized version of this function defaults both transaction parameter buffer options to nil.
 
@@ -107,7 +107,7 @@ Firebird supports transactions against multiple open databases; the API for doin
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_start_transaction()}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_rollback_transaction @var{status}: ref ISC_STATUS_ARRAY; @var{transaction}: ref isc_tr_handle
+@deftypefn Proc ISC_STATUS isc_rollback_transaction @var{status}: var ISC_STATUS_ARRAY; @var{transaction}: var isc_tr_handle
 
 Aborts a transaction; any changes that would have been made inside of it are not made. The database remains unchanged.
 @end deftypefn
@@ -159,7 +159,7 @@ Runs a statement which returns no more than a single row of results.
 
 @subsection Lifecycle
 
-@deftypefn Proc ISC_STATUS isc_dsql_allocate_statement status: ref ISC_STATUS_ARRAY; db: ref isc_db_handle; statement: var isc_stmt_handle; autofree: bool = true
+@deftypefn Proc ISC_STATUS isc_dsql_allocate_statement status: var ISC_STATUS_ARRAY; db: var isc_db_handle; statement: var isc_stmt_handle; autofree: bool = true
 
 Allocates a handle for a prepared statement. @var{autofree} statements are cleaned up when their database is detached, otherwise you must clean up the handle manually.
 
@@ -167,7 +167,7 @@ Allocates a handle for a prepared statement. @var{autofree} statements are clean
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_alloc_statement2()}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_dsql_free_statement status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; on_free: StatementFreeType
+@deftypefn Proc ISC_STATUS isc_dsql_free_statement status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; on_free: StatementFreeType
 
 Explicitly frees a previously allocated statement.  Not necessary for statements created with @var{autofree = true}.
 
@@ -218,13 +218,13 @@ Prepares a statement with a single placeholder: the value assigned to the @samp{
 
 Firebird can analyze a prepared statement and return information about either the values which will be returned from a @code{SELECT} statement, or the placeholders for an @code{INSERT} statement.
 
-@deftypefn Proc ISC_STATUS isc_dsql_describe status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
+@deftypefn Proc ISC_STATUS isc_dsql_describe status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
 Analyzes the prepared @var{statement}, and stores the necessary variable definitions for data coming out of the database in @var{outx}.
 
 @cite{Firebird 3.0's example/api/api4.c file}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_dsql_describe_bind(status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA)
+@deftypefn Proc ISC_STATUS isc_dsql_describe_bind(status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA)
 Analyzes the prepared @var{statement}, and stores the necessary variable definitions for data going from the program to the query's placeholders in @var{inx}.
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_describe_bind()}
@@ -232,7 +232,7 @@ Analyzes the prepared @var{statement}, and stores the necessary variable definit
 
 @subsection Execution
 
-@deftypefn Proc ISC_STATUS isc_dsql_execute status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
+@deftypefn Proc ISC_STATUS isc_dsql_execute status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
 Runs a previously prepared statement.  @xref{isc_dsql_prepare}@.
 
 @var{inx} may be left out, or @code{nil}, if a statement has no placeholders.  Statements with placeholders must be given a valid @code{XSQLDA} in the @var{inx} parameter.  @var{inx} contains the input values to replace each placeholder with.
@@ -255,7 +255,7 @@ This could be better documented, but I have no idea what the parameters are or h
 
 @section SQL Codes
 
-@deftypefn Proc ISC_LONG isc_sqlcode const status: ref ISC_STATUS_ARRAY
+@deftypefn Proc ISC_LONG isc_sqlcode const status: var ISC_STATUS_ARRAY
 Returns the SQL Code from the @var{status} error vector.  SQL Codes are set from actions such as executing statements.  Codes represent special situations such as failing to insert new rows due to constraint violations.
 @end deftypefn
 
