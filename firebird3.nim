@@ -56,20 +56,20 @@ const
   FB_TRUE* {.importc, header: ibase_h.} = 1.cchar
 
 type
-  ISC_LONG* {.importc, header: ibase_h.} = int32
-  ISC_ULONG* {.importc, header: ibase_h.} = uint32
-  ISC_SHORT* {.importc, header: ibase_h.} = cshort
-  ISC_USHORT* {.importc, header: ibase_h.} = cushort
-  ISC_UCHAR* {.importc, header: ibase_h.} = cuchar
-  ISC_SCHAR* {.importc, header: ibase_h.} = cchar
-  FB_BOOLEAN* {.importc, header: ibase_h.} = ISC_UCHAR
+  #ISC_LONG* {.importc, header: ibase_h.} = int32
+  #ISC_ULONG* {.importc, header: ibase_h.} = uint32
+  #ISC_SHORT* {.importc, header: ibase_h.} = cshort
+  #ISC_USHORT* {.importc, header: ibase_h.} = cushort
+  #ISC_UCHAR* {.importc, header: ibase_h.} = cuchar
+  #ISC_SCHAR* {.importc, header: ibase_h.} = cchar
+  FB_BOOLEAN* {.importc, header: ibase_h.} = cuchar
 
 #* 64 bit Integers                                                 */
 #*******************************************************************/
 
-type
-  ISC_INT64* {.importc, header: ibase_h.} = int64
-  ISC_UINT64* {.importc, header: ibase_h.} = uint64
+#type
+#ISC_INT64* {.importc, header: ibase_h.} = int64
+#ISC_UINT64* {.importc, header: ibase_h.} = uint64
 
 #* Time & Date support                                             */
 #*******************************************************************/
@@ -88,8 +88,8 @@ type
 type
   GDS_QUAD_t* {.importc, header: ibase_h.} = object
     # NB these were aliased from isc_quad_*, but nim doesn't have #define
-    gds_quad_high*: ISC_LONG
-    gds_quad_low*: ISC_ULONG
+    gds_quad_high*: int32
+    gds_quad_low*: uint32
 
   GDS_QUAD* = GDS_QUAD_t
   ISC_QUAD* = GDS_QUAD_t
@@ -107,12 +107,12 @@ type
   isc_stmt_handle* = FB_API_HANDLE
   isc_svc_handle* = FB_API_HANDLE
   isc_tr_handle* = FB_API_HANDLE
-  isc_resv_handle* = ISC_LONG
+  isc_resv_handle* = int32
 
   isc_callback* {.importc, header: ibase_h.} = proc()
-  ISC_PRINT_CALLBACK* {.importc, header: ibase_h.} = proc(a: pointer; b: ISC_SHORT; c: cstring)
+  ISC_PRINT_CALLBACK* {.importc, header: ibase_h.} = proc(a: pointer; b: cshort; c: cstring)
   ISC_VERSION_CALLBACK* {.importc, header: ibase_h.} = proc(a: pointer; b: cstring)
-  ISC_EVENT_CALLBACK* {.importc, header: ibase_h.} = proc(a: pointer; b: ISC_USHORT; c: ptr ISC_UCHAR)
+  ISC_EVENT_CALLBACK* {.importc, header: ibase_h.} = proc(a: pointer; b: cushort; c: ptr cuchar)
 
 #* Blob id structure                                               */
 #*******************************************************************/
@@ -123,11 +123,11 @@ type
     array_bound_upper*: cshort
 
   ISC_ARRAY_DESC* {.importc, header: ibase_h.} = object
-    array_desc_dtype*: ISC_UCHAR
-    array_desc_scale*: ISC_SCHAR
+    array_desc_dtype*: cuchar
+    array_desc_scale*: cchar
     array_desc_length*: cushort
-    array_desc_field_name*: array[0..31, ISC_SCHAR]
-    array_desc_relation_name*: array[0..31, ISC_SCHAR]
+    array_desc_field_name*: array[0..31, cchar]
+    array_desc_relation_name*: array[0..31, cchar]
     array_desc_dimensions*: cshort
     array_desc_flags*: cshort
     array_desc_bounds*: array[0..15, ISC_ARRAY_BOUND]
@@ -136,8 +136,8 @@ type
     blob_desc_subtype*: cshort
     blob_desc_charset*: cshort
     blob_desc_segment_size*: cshort
-    blob_desc_field_name*: array[0..31, ISC_UCHAR]
-    blob_desc_relation_name*: array[0..31, ISC_UCHAR]
+    blob_desc_field_name*: array[0..31, cuchar]
+    blob_desc_relation_name*: array[0..31, cuchar]
 
 #* Blob control structure  */
 #***************************/
@@ -152,10 +152,10 @@ type
     ctl_segment_length*: cushort
     ctl_bpb_length*: cushort
     ctl_bpb*: cstring
-    ctl_buffer*: ptr ISC_UCHAR
-    ctl_max_segment*: ISC_LONG
-    ctl_number_segments*: ISC_LONG
-    ctl_total_length*: ISC_LONG
+    ctl_buffer*: ptr cuchar
+    ctl_max_segment*: int32
+    ctl_number_segments*: int32
+    ctl_total_length*: int32
     ctl_status*: ptr ISC_STATUS
     ctl_data*: array[0..7, clong]
 
@@ -194,27 +194,27 @@ const
 
 type
   blobcallback_obj* {.importc: "struct blobcallback", header: ibase_h.} = object
-    blob_get_segment*: proc(hnd: pointer; buffer: ptr ISC_UCHAR; buf_size: ISC_USHORT; result_len: ptr ISC_USHORT): cshort
+    blob_get_segment*: proc(hnd: pointer; buffer: ptr cuchar; buf_size: cushort; result_len: ptr cushort): cshort
     blob_handle*: pointer
-    blob_number_segments*: ISC_LONG
-    blob_max_segment*: ISC_LONG
-    blob_total_length*: ISC_LONG
-    blob_put_segment*: proc(hnd: pointer; buffer: ptr ISC_UCHAR; buf_size: ISC_USHORT)
-    blob_lseek*: proc(hnd: pointer; mode: ISC_USHORT; offset: ISC_LONG): ISC_LONG
+    blob_number_segments*: int32
+    blob_max_segment*: int32
+    blob_total_length*: int32
+    blob_put_segment*: proc(hnd: pointer; buffer: ptr cuchar; buf_size: cushort)
+    blob_lseek*: proc(hnd: pointer; mode: cushort; offset: int32): int32
 
   BLOBCALLBACK* = ptr blobcallback_obj
 
   PARAMDSC* {.importc, header: ibase_h.} = object
-    dsc_dtype*: ISC_UCHAR
+    dsc_dtype*: cuchar
     dsc_scale*: int8
-    dsc_length*: ISC_USHORT
+    dsc_length*: cushort
     dsc_sub_type*: cshort
-    dsc_flags*: ISC_USHORT
-    dsc_address*: ptr ISC_UCHAR
+    dsc_flags*: cushort
+    dsc_address*: ptr cuchar
 
   PARAMVARY* {.importc, header: ibase_h.} = object
-    vary_length*: ISC_USHORT
-    vary_string*: array[0..0, ISC_UCHAR]
+    vary_length*: cushort
+    vary_string*: array[0..0, cuchar]
 
 const
   DSC_null*        = 1
@@ -259,29 +259,29 @@ const
 
 type
   XSQLVAR* {.importc, header: ibase_h.} = object
-    sqltype*: ISC_SHORT
-    sqlscale*: ISC_SHORT
-    sqlsubtype*: ISC_SHORT
-    sqllen*: ISC_SHORT
+    sqltype*: cshort
+    sqlscale*: cshort
+    sqlsubtype*: cshort
+    sqllen*: cshort
     sqldata*: pointer
-    sqlind*: ptr ISC_SHORT
-    sqlname_length*: ISC_SHORT
-    sqlname*: array[0..31, ISC_SCHAR]
-    relname_length*: ISC_SHORT
-    relname*: array[0..31, ISC_SCHAR]
-    ownname_length*: ISC_SHORT
-    ownname*: array[0..31, ISC_SCHAR]
-    aliasname_length*: ISC_SHORT
-    aliasname*: array[0..31, ISC_SCHAR]
+    sqlind*: ptr cshort
+    sqlname_length*: cshort
+    sqlname*: array[0..31, cchar]
+    relname_length*: cshort
+    relname*: array[0..31, cchar]
+    ownname_length*: cshort
+    ownname*: array[0..31, cchar]
+    aliasname_length*: cshort
+    aliasname*: array[0..31, cchar]
 
   PXSQLVAR* = ptr XSQLVAR
 
   XSQLDA* {.importc, header: ibase_h.} = object
-    version*: ISC_SHORT
-    sqldaid*: array[0..7, ISC_SCHAR]
-    sqldabc*: ISC_LONG
-    sqln*: ISC_SHORT # number of parameters allocated
-    sqld*: ISC_SHORT # number of parameters firebird wants to use
+    version*: cshort
+    sqldaid*: array[0..7, cchar]
+    sqldabc*: int32
+    sqln*: cshort # number of parameters allocated
+    sqld*: cshort # number of parameters firebird wants to use
     sqlvar*: array[0..0, XSQLVAR]
 
   PXSQLDA* = ptr XSQLDA
@@ -301,8 +301,8 @@ proc `[]`* (self: PXSQLDA; index: int): PXSQLVAR =
 proc make_xsqlda*(vars: int): PXSQLDA =
   result = cast[PXSQLDA](alloc(XSQLDA_LENGTH(vars)))
   result.version = SQLDA_VERSION1
-  result.sqln = vars.ISC_SHORT
-  result.sqld = vars.ISC_SHORT
+  result.sqln = vars.cshort
+  result.sqld = vars.cshort
 
 proc free_xsqlda*(self: PXSQLDA; dealloc_children: bool = true) =
   # free potentially allocated data; if you are doing cheeky things,
@@ -356,25 +356,25 @@ proc isc_attach_database(status: var ISC_STATUS_ARRAY; db_name_length: cshort; d
 proc isc_attach_database*(status_vector: var ISC_STATUS_ARRAY; db_name: cstring; db: var isc_db_handle; parm_buffer_length: cshort = 0; parm_buffer: cstring = nil): ISC_STATUS {.inline.} =
   result = isc_attach_database(status_vector, 0, db_name, db, parm_buffer_length, parm_buffer)
 
-# TODO ISC_STATUS isc_array_gen_sdl(status: var ISC_STATUS_ARRAY, const ISC_ARRAY_DESC*, ISC_SHORT*, ISC_UCHAR*, ISC_SHORT*);
+# TODO ISC_STATUS isc_array_gen_sdl(status: var ISC_STATUS_ARRAY, const ISC_ARRAY_DESC*, cshort*, cuchar*, cshort*);
 
-proc isc_array_get_slice*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var ISC_LONG): ISC_STATUS {.importc, header: ibase_h.}
+proc isc_array_get_slice*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var int32): ISC_STATUS {.importc, header: ibase_h.}
 
 proc isc_array_lookup_bounds*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; table_name, column_name: cstring; desc: var ISC_ARRAY_DESC): ISC_STATUS {.importc, header: ibase_h.}
 
 # TODO ISC_STATUS isc_array_lookup_desc(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, const cstring, const cstring, ISC_ARRAY_DESC*);
 # TODO ISC_STATUS isc_array_set_desc(status: var ISC_STATUS_ARRAY, const cstring, const cstring, const short*, const short*, const short*, ISC_ARRAY_DESC*);
 
-proc isc_array_put_slice*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var ISC_LONG): ISC_STATUS {.importc, header: ibase_h.}
+proc isc_array_put_slice*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var int32): ISC_STATUS {.importc, header: ibase_h.}
 
-# TODO void isc_blob_default_desc(ISC_BLOB_DESC*, const ISC_UCHAR*, const ISC_UCHAR*);
-# TODO ISC_STATUS isc_blob_gen_bpb(status: var ISC_STATUS_ARRAY, const ISC_BLOB_DESC*, const ISC_BLOB_DESC*, unsigned short, ISC_UCHAR*, unsigned short*);
+# TODO void isc_blob_default_desc(ISC_BLOB_DESC*, const cuchar*, const cuchar*);
+# TODO ISC_STATUS isc_blob_gen_bpb(status: var ISC_STATUS_ARRAY, const ISC_BLOB_DESC*, const ISC_BLOB_DESC*, unsigned short, cuchar*, unsigned short*);
 # TODO ISC_STATUS isc_blob_info(status: var ISC_STATUS_ARRAY, isc_blob_handle*, short, const cstring, short, cstring);
-# TODO ISC_STATUS isc_blob_lookup_desc(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, const ISC_UCHAR*, const ISC_UCHAR*, ISC_BLOB_DESC*, ISC_UCHAR*);
-# TODO ISC_STATUS isc_blob_set_desc(status: var ISC_STATUS_ARRAY, const ISC_UCHAR*, const ISC_UCHAR*, short, short, short, ISC_BLOB_DESC*);
+# TODO ISC_STATUS isc_blob_lookup_desc(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, const cuchar*, const cuchar*, ISC_BLOB_DESC*, cuchar*);
+# TODO ISC_STATUS isc_blob_set_desc(status: var ISC_STATUS_ARRAY, const cuchar*, const cuchar*, short, short, short, ISC_BLOB_DESC*);
 # TODO ISC_STATUS isc_cancel_blob(status: var ISC_STATUS_ARRAY, isc_blob_handle *);
 
-proc isc_cancel_events*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var ISC_LONG): ISC_STATUS {.importc, header: ibase_h.}
+proc isc_cancel_events*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var int32): ISC_STATUS {.importc, header: ibase_h.}
 
 proc isc_close_blob*(status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle): ISC_STATUS {.importc, header: ibase_h.}
 
@@ -446,31 +446,31 @@ proc isc_dsql_set_cursor_name*(status: var ISC_STATUS_ARRAY; statement: var isc_
 # TODO void isc_encode_sql_time(const pointer, ISC_TIME*);
 # TODO void isc_encode_timestamp(const pointer, ISC_TIMESTAMP*);
 
-proc isc_event_block*(event_buf, result_buf: var cstring; name_count: cushort): ISC_LONG {.importc, header: ibase_h, varargs.}
+proc isc_event_block*(event_buf, result_buf: var cstring; name_count: cushort): int32 {.importc, header: ibase_h, varargs.}
 
-# TODO ISC_USHORT isc_event_block_a(cstring*, cstring*, ISC_USHORT, cstring*);
-# TODO void isc_event_block_s(cstring*, cstring*, ISC_USHORT, cstring*, ISC_USHORT*);
-# TODO void isc_event_counts(ISC_ULONG*, short, ISC_UCHAR*, const ISC_UCHAR *);
-# TODO int isc_modify_dpb(cstring*, short*, unsigned short, const cstring, short); ISC_LONG isc_free(ISC_SCHAR *);
+# TODO cushort isc_event_block_a(cstring*, cstring*, cushort, cstring*);
+# TODO void isc_event_block_s(cstring*, cstring*, cushort, cstring*, cushort*);
+# TODO void isc_event_counts(uint32*, short, cuchar*, const cuchar *);
+# TODO int isc_modify_dpb(cstring*, short*, unsigned short, const cstring, short); int32 isc_free(cchar *);
 
 proc isc_get_segment*(status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle; read_len: var cushort; blen: cushort; buf: ptr int8): ISC_STATUS {.importc, header: ibase_h.}
 
-# TODO ISC_STATUS isc_get_slice(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, ISC_QUAD*, short, const cstring, short, const ISC_LONG*, ISC_LONG, pointer, ISC_LONG*);
-# TODO ISC_LONG fb_interpret(cstring, unsigned int, const status: var ISC_STATUS_ARRAY*);
+# TODO ISC_STATUS isc_get_slice(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, ISC_QUAD*, short, const cstring, short, const int32*, int32, pointer, int32*);
+# TODO int32 fb_interpret(cstring, unsigned int, const status: var ISC_STATUS_ARRAY*);
 
 proc isc_open_blob*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD): ISC_STATUS {.importc, header: ibase_h.}
 
-# TODO ISC_STATUS isc_open_blob2(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, isc_blob_handle*, ISC_QUAD*, ISC_USHORT, const ISC_UCHAR*);
+# TODO ISC_STATUS isc_open_blob2(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, isc_blob_handle*, ISC_QUAD*, cushort, const cuchar*);
 
-# TODO ISC_STATUS isc_prepare_transaction2(status: var ISC_STATUS_ARRAY, transaction: var isc_tr_handle, ISC_USHORT, const ISC_UCHAR*);
-# TODO void isc_print_sqlerror(ISC_SHORT, const status: var ISC_STATUS_ARRAY);
+# TODO ISC_STATUS isc_prepare_transaction2(status: var ISC_STATUS_ARRAY, transaction: var isc_tr_handle, cushort, const cuchar*);
+# TODO void isc_print_sqlerror(cshort, const status: var ISC_STATUS_ARRAY);
 # TODO ISC_STATUS isc_print_status(const status: var ISC_STATUS_ARRAY);
 
 proc isc_put_segment*(status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle; blen: cushort; buf: ptr int8): ISC_STATUS {.importc, header: ibase_h.}
 
-# TODO ISC_STATUS isc_put_slice(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, ISC_QUAD*, short, const cstring, short, const ISC_LONG*, ISC_LONG, pointer);
+# TODO ISC_STATUS isc_put_slice(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, ISC_QUAD*, short, const cstring, short, const int32*, int32, pointer);
 
-proc isc_que_events*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var ISC_LONG; eblen: cshort; eb: cstring; cb: ISC_EVENT_CALLBACK; userdata: pointer): ISC_STATUS {.importc, header: ibase_h.}
+proc isc_que_events*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var int32; eblen: cshort; eb: cstring; cb: ISC_EVENT_CALLBACK; userdata: pointer): ISC_STATUS {.importc, header: ibase_h.}
 
 # TODO ISC_STATUS isc_rollback_retaining(status: var ISC_STATUS_ARRAY, transaction: var isc_tr_handle);
 proc isc_rollback_transaction*(status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
@@ -483,16 +483,16 @@ proc isc_start_transaction*(status: var ISC_STATUS_ARRAY; transaction: var isc_t
 
 # TODO ISC_STATUS fb_disconnect_transaction(status: var ISC_STATUS_ARRAY, transaction: var isc_tr_handle);
 
-proc isc_sqlcode*(status: var ISC_STATUS_ARRAY): ISC_LONG {.importc, header: ibase_h.}
+proc isc_sqlcode*(status: var ISC_STATUS_ARRAY): int32 {.importc, header: ibase_h.}
 
-# TODO void isc_sqlcode_s(const status: var ISC_STATUS_ARRAY, ISC_ULONG*);
+# TODO void isc_sqlcode_s(const status: var ISC_STATUS_ARRAY, uint32*);
 # TODO void fb_sqlstate(char*, const status: var ISC_STATUS_ARRAY);
 # TODO void isc_sql_interprete(short, cstring, short);
 # TODO ISC_STATUS isc_transaction_info(status: var ISC_STATUS_ARRAY, transaction: var isc_tr_handle, short, const cstring, short, cstring);
 # TODO ISC_STATUS isc_transact_request(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, unsigned short, cstring, unsigned short, cstring, unsigned short, cstring);
 
-proc isc_vax_integer*(buf: pointer; size: cshort): ISC_LONG {.importc, header: ibase_h.}
-proc isc_portable_integer*(buf: pointer; size: cshort): ISC_INT64 {.importc, header: ibase_h.}
+proc isc_vax_integer*(buf: pointer; size: cshort): int32 {.importc, header: ibase_h.}
+proc isc_portable_integer*(buf: pointer; size: cshort): int64 {.importc, header: ibase_h.}
 
 #* Security Functions and structures */
 #*************************************/
@@ -544,7 +544,7 @@ proc isc_modify_user*(status: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA): IS
 # TODO ISC_STATUS isc_reconnect_transaction(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, short, const cstring);
 # TODO ISC_STATUS isc_release_request(status: var ISC_STATUS_ARRAY, isc_req_handle*);
 # TODO ISC_STATUS isc_request_info(status: var ISC_STATUS_ARRAY, isc_req_handle*, short, short, const cstring, short, cstring);
-# TODO ISC_STATUS isc_seek_blob(status: var ISC_STATUS_ARRAY, isc_blob_handle*, short, ISC_LONG, ISC_LONG*);
+# TODO ISC_STATUS isc_seek_blob(status: var ISC_STATUS_ARRAY, isc_blob_handle*, short, int32, int32*);
 # TODO ISC_STATUS isc_send(status: var ISC_STATUS_ARRAY, isc_req_handle*, short, short, const pointer, short);
 # TODO ISC_STATUS isc_start_and_send(status: var ISC_STATUS_ARRAY, isc_req_handle*, transaction: var isc_tr_handle, short, short, const pointer, short);
 # TODO ISC_STATUS isc_start_request(status: var ISC_STATUS_ARRAY, isc_req_handle *, isc_tr_handle *, short);
@@ -584,8 +584,8 @@ proc isc_wait_for_event*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eb
 # TODO ISC_STATUS isc_embed_dsql_execute2(status: var ISC_STATUS_ARRAY, transaction: var isc_tr_handle, const cstring, unsigned short, XSQLDA*, XSQLDA*);
 # TODO ISC_STATUS isc_embed_dsql_execute_immed(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, transaction: var isc_tr_handle, unsigned short, const cstring, unsigned short, XSQLDA*);
 # TODO ISC_STATUS isc_embed_dsql_fetch(status: var ISC_STATUS_ARRAY, const cstring, unsigned short, XSQLDA*);
-# TODO ISC_STATUS isc_embed_dsql_fetch_a(status: var ISC_STATUS_ARRAY, int*, const cstring, ISC_USHORT, XSQLDA*);
-# TODO void isc_embed_dsql_length(const ISC_UCHAR*, ISC_USHORT*);
+# TODO ISC_STATUS isc_embed_dsql_fetch_a(status: var ISC_STATUS_ARRAY, int*, const cstring, cushort, XSQLDA*);
+# TODO void isc_embed_dsql_length(const cuchar*, cushort*);
 # TODO ISC_STATUS isc_embed_dsql_open(status: var ISC_STATUS_ARRAY, transaction: var isc_tr_handle, const cstring, unsigned short, XSQLDA*);
 # TODO ISC_STATUS isc_embed_dsql_open2(status: var ISC_STATUS_ARRAY, transaction: var isc_tr_handle, const cstring, unsigned short, XSQLDA*, XSQLDA*);
 # TODO ISC_STATUS isc_embed_dsql_insert(status: var ISC_STATUS_ARRAY, const cstring, unsigned short, XSQLDA*);
@@ -596,7 +596,7 @@ proc isc_wait_for_event*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eb
 #******************************/
 
 # TODO FB_BLOB_STREAM BLOB_open(isc_blob_handle, cstring, int);
-# TODO int BLOB_put(ISC_SCHAR, FB_BLOB_STREAM);
+# TODO int BLOB_put(cchar, FB_BLOB_STREAM);
 # TODO int BLOB_close(FB_BLOB_STREAM);
 # TODO int BLOB_get(FB_BLOB_STREAM);
 # TODO int BLOB_display(ISC_QUAD*, isc_db_handle, isc_tr_handle, const cstring);
@@ -610,9 +610,9 @@ proc isc_wait_for_event*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eb
 #* Other Misc functions       */
 #******************************/
 
-# TODO ISC_LONG isc_ftof(const cstring, const unsigned short, cstring, const unsigned short);
+# TODO int32 isc_ftof(const cstring, const unsigned short, cstring, const unsigned short);
 # TODO ISC_STATUS isc_print_blr(const cstring, ISC_PRINT_CALLBACK, pointer, short);
-# TODO int fb_print_blr(const ISC_UCHAR*, ISC_ULONG, ISC_PRINT_CALLBACK, pointer, short);
+# TODO int fb_print_blr(const cuchar*, uint32, ISC_PRINT_CALLBACK, pointer, short);
 # TODO void isc_set_debug(int);
 # TODO void isc_qtoq(const ISC_QUAD*, ISC_QUAD*);
 # TODO void isc_vtof(const cstring, cstring, unsigned short);
@@ -626,7 +626,7 @@ proc isc_wait_for_event*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eb
 
 #define ADD_SPB_LENGTH(p, length)       {*(p)++ = (length); \ *(p)++ = (length) >> 8;}
 
-#define ADD_SPB_NUMERIC(p, data)        {*(p)++ = (ISC_SCHAR) (ISC_UCHAR) (data); \ *(p)++ = (ISC_SCHAR) (ISC_UCHAR) ((data) >> 8); \ *(p)++ = (ISC_SCHAR) (ISC_UCHAR) ((data) >> 16); \ *(p)++ = (ISC_SCHAR) (ISC_UCHAR) ((data) >> 24);}
+#define ADD_SPB_NUMERIC(p, data)        {*(p)++ = (cchar) (cuchar) (data); \ *(p)++ = (cchar) (cuchar) ((data) >> 8); \ *(p)++ = (cchar) (cuchar) ((data) >> 16); \ *(p)++ = (cchar) (cuchar) ((data) >> 24);}
 
 # TODO ISC_STATUS isc_service_attach(status: var ISC_STATUS_ARRAY, unsigned short, const cstring, isc_svc_handle*, unsigned short, const cstring);
 # TODO ISC_STATUS isc_service_detach(status: var ISC_STATUS_ARRAY, isc_svc_handle *);
@@ -638,7 +638,7 @@ proc isc_wait_for_event*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eb
 
 # TODO int fb_shutdown(unsigned int, const int);
 # TODO ISC_STATUS fb_shutdown_callback(status: var ISC_STATUS_ARRAY, FB_SHUTDOWN_CALLBACK, const int, pointer);
-# TODO ISC_STATUS fb_cancel_operation(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, ISC_USHORT);
+# TODO ISC_STATUS fb_cancel_operation(status: var ISC_STATUS_ARRAY, db: var isc_db_handle, cushort);
 
 #* Ping the connection */
 #***********************/
@@ -654,7 +654,7 @@ proc isc_wait_for_event*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eb
 #* Client information functions */
 #********************************/
 
-# TODO void isc_get_client_version ( ISC_SCHAR  *);
+# TODO void isc_get_client_version ( cchar  *);
 # TODO int  isc_get_client_major_version ();
 # TODO int  isc_get_client_minor_version ();
 

@@ -24,6 +24,29 @@ Strings are a series of bytes, ending in an ASCII NULL terminator.
 Strings begin with their length, and bytes of the string follow.
 @end table
 
+@section Numeric Types
+
+@multitable
+@headitem Firebird Type
+@tab Nim Type
+@item ISC_LONG
+@tab int32
+@item ISC_ULONG
+@tab uint32
+@item ISC_SHORT
+@tab cshort
+@item ISC_USHORT
+@tab cushort
+@item ISC_UCHAR
+@tab cuchar
+@item ISC_SCHAR
+@tab cchar
+@item ISC_INT64
+@tab int64
+@item ISC_UINT64
+@tab uint64
+@end multitable
+
 @section Error Status Vector
 
 Firebird has an ``error status vector'' type which is supplied to all function calls.  While in many C examples an array of a fixed size is passed in to a pointer to an array, the Nim version uses strict type checking.  You @emph{must} use the @code{ISC_STATUS_ARRAY} type.  This type is passed through using @code{var} to avoid polluting most calls with @code{ptr} related code.  Using these types ensures that should Firebird change the size of the status vector, no effort is required on your part to support that change.
@@ -255,7 +278,7 @@ This could be better documented, but I have no idea what the parameters are or h
 
 @section SQL Codes
 
-@deftypefn Proc ISC_LONG isc_sqlcode const status: var ISC_STATUS_ARRAY
+@deftypefn Proc int32 isc_sqlcode const status: var ISC_STATUS_ARRAY
 Returns the SQL Code from the @var{status} error vector.  SQL Codes are set from actions such as executing statements.  Codes represent special situations such as failing to insert new rows due to constraint violations.
 @end deftypefn
 
@@ -360,14 +383,14 @@ BLR (internal Firebird stuff).
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_array_lookup_bounds2()}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_array_get_slice status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var ISC_LONG
+@deftypefn Proc ISC_STATUS isc_array_get_slice status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var int32
 Writes @var{buflen} bytes from the buffer @var{buf} to the array with handle @var{array_id} and described by @var{desc}.  The number of bytes actually written is written back to @var{buflen}.
 
 @cite{Firebird 3.0's example/api/api10.c files}@sp 0
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_array_get_slice2()}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_array_put_slice status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var ISC_LONG
+@deftypefn Proc ISC_STATUS isc_array_put_slice status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; array_id: var ISC_QUAD; desc: var ISC_ARRAY_DESC; buf: pointer; buflen: var int32
 Reads @var{buflen} bytes in to buffer @var{buf} from the array with a handle @var{array_id} and a description @var{desc}.  The number of bytes actually read is written back to @var{buflen}.
 
 @cite{Firebird 3.0's example/api/api10.c files}@sp 0
@@ -380,7 +403,7 @@ Reads @var{buflen} bytes in to buffer @var{buf} from the array with a handle @va
 
 @section Functions
 
-@deftypefn Proc ISC_LONG isc_event_block event_buf, result_buf: var cstring; name_count: cushort, ...
+@deftypefn Proc int32 isc_event_block event_buf, result_buf: var cstring; name_count: cushort, ...
 Creates two parameter buffers and returns them via @var{event_buf} and @var{result_buf}.
 
 This function accepts a variable number of arguments.  Specify the number of event names in @var{name_count}, then provide @code{cstring}s equal in number to @var{name_count}.  Note that @var{name_count} cannot exceed fifteen@footnote{This restriction is inferred from Embarcadero's documentation; whether the limitation also exists in Firebird is unknown.}.
@@ -389,14 +412,14 @@ This function accepts a variable number of arguments.  Specify the number of eve
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_event_block()}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_que_events status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var ISC_LONG; eblen: cshort; eb: cstring; cb: ISC_EVENT_CALLBACK; userdata: pointer
+@deftypefn Proc ISC_STATUS isc_que_events status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var int32; eblen: cshort; eb: cstring; cb: ISC_EVENT_CALLBACK; userdata: pointer
 Registers asynchronous event listeners with database @var{db}.  An ID referring to these listeners is written to @var{event_id}, which may then be used in other procs to ex. cancel the events later on.  @var{eblen} is the length of the event parameter buffer, and @var{eb} is the event parameter buffer.
 
 @cite{Firebird 3.0's example/api/api16.c files}@sp 0
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_que_events()}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_cancel_events status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var ISC_LONG
+@deftypefn Proc ISC_STATUS isc_cancel_events status: var ISC_STATUS_ARRAY; db: var isc_db_handle; event_id: var int32
 Cancels all event listeners registered to @var{event_id}.
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_cancel_events()}
@@ -452,7 +475,7 @@ USER_SEC_DATA* @{.importc, header: ibase_h.@} = object
 @node Silliness with Numbers
 @chapter Silliness with Numbers
 
-@deftypefn Proc ISC_LONG isc_vax_integer buf: pointer; size: cshort
+@deftypefn Proc int32 isc_vax_integer buf: pointer; size: cshort
 @deftypefnx Proc ISC_INT64 isc_portable_integer buf: pointer; size: cshort
 
 Flips the byte order of numbers, converting them from little-endian to big-endian and vice versa.  @var{buf} is a pointer to the number being converted, while @var{size} is the number of bytes for the integer type.  @code{isc_vax_integer} supports lengths of 1, 2 and 4 bytes.  @code{isc_portable_integer} supports lengths of 1, 2, 4 and 8 bytes.
