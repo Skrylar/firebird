@@ -1,0 +1,26 @@
+
+@node Cursors
+@chapter Cursors
+
+@quotation Note
+This section is poorly documented, and needs feedback from Firebird users.
+@end quotation
+
+A prepared query has a @dfn{cursor}.  Cursors point to results from that query and are used to navigate results and update records.  Suppose that a @code{SELECT * FROM users} call returned ten results.  You would be able to access the first returned row through the @code{XSQLDA} passed when you executed that query.  To access others, you would need to advance the cursor.  You could also decide, programmatically, to modify the current user.  By issuing a command similar to @code{UPDATE WHERE CURRENT OF @samp{cursor name} VALUES (winner = true)}@footnote{This statement has not been vetted; it probably does not actually run on any Firebird database.} changes would be made where the cursor is.
+
+Cursors are related to @code{WHERE CURRENT OF @samp{cursor name}} SQL code.
+
+@section Functions
+
+@deftypefn Proc ISC_STATUS isc_dsql_set_cursor_name status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; name: cstring; unused: cushort = 0
+Sets the cursor @var{name} for a given @var{statement}.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_set_cursor_name()}
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_dsql_fetch status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
+
+Advances the statement's cursor forward by oen row.  The new record's values are written to @var{outx}.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_fetch()}
+@end deftypefn

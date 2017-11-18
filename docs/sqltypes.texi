@@ -1,0 +1,44 @@
+
+@node SQL Data Types
+@appendix SQL Data Types
+
+As Firebird's documentation is lacking on which specific types match up to which SQL types, a convenient mapping of SQL types to Nim is provided:
+
+@multitable {SQL_TIMESTAMP} {Memory buffer}
+@headitem Type name
+@tab Nim type
+@item SQL_TEXT, SQL_VARYING
+@tab Memory buffer@footnote{This is not a data type.  Text and Varying fields take pointers to memory containing the text in question.  They also use the length field to determine how large the buffer is (or how much of the buffer was written to.)}
+@item SQL_SHORT
+@tab cshort
+@item SQL_LONG
+@tab clong
+@item SQL_FLOAT
+@tab cfloat
+@item SQL_DOUBLE
+@tab cdouble
+@item SQL_D_FLOAT
+@tab ???
+@item SQL_TIMESTAMP
+@tab ISC_TIMESTAMP
+@item SQL_DATE@footnote{Date is a synonym for Timestamp.}
+@tab ISC_TIMESTAMP
+@item SQL_BLOB@footnote{Blob has multiple sub-types, see @ref{blob subtypes}@.}
+@tab GDS_QUAD
+@item SQL_ARRAY
+@tab GDS_QUAD
+@item SQL_QUAD
+@tab GDS_QUAD
+@item SQL_TYPE_TIME
+@tab ISC_TIME
+@item SQL_TYPE_DATE
+@tab ISC_DATE
+@item SQL_INT64
+@tab int64
+@item SQL_BOOLEAN
+@tab ???
+@item SQL_NULL
+@tab ???
+@end multitable
+
+@cite{Firebird 3.0's example/api/apifull.c file}

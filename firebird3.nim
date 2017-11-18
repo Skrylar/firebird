@@ -379,7 +379,7 @@ proc isc_cancel_events*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; eve
 proc isc_close_blob*(status: var ISC_STATUS_ARRAY; blob: var isc_blob_handle): ISC_STATUS {.importc, header: ibase_h.}
 
 # TODO ISC_STATUS isc_commit_retaining(status: ref ISC_STATUS_ARRAY, isc_tr_handle *);
-proc isc_commit_transaction*(status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
+proc isc_commit_transaction*(status: var ISC_STATUS_ARRAY; transaction: var isc_tr_handle): ISC_STATUS {.importc, header: ibase_h, discardable.}
 
 proc isc_create_blob*(status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; blob: var isc_blob_handle; blob_id: var ISC_QUAD): ISC_STATUS {.importc, header: ibase_h.}
 

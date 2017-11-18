@@ -5,15 +5,39 @@
 @ifnottex
 @node Top
 @top
-
 @end ifnottex
 
-@node Database connections
-@chapter Database connections
+@node Between Nim and C
+@chapter Between Nim and C
 
-@quotation Note
-It is possible to use Pascal-style string handling, where a pointer to text and a given length of the text is passed to this function. Presently that method has been wrapped over, enforcing the use of cstrings. A ``proper'' version which accepts native Nim strings might be possible.
-@end quotation
+Firebird's client library is written in C.  There are a few differences between that C library and the Nim wrapper to keep in mind.
+
+@section Strings
+
+Firebase supports both C and Pascal conventions for strings.  This wrapper errs on the side of C at present.  If the Pascal conventions can be used safely then additional methods which make use of it (and avoid conversion from Nim @code{string}s to @code{cstring}) will be considered.
+
+@table @asis
+@item C Strings
+Strings are a series of bytes, ending in an ASCII NULL terminator.
+
+@item Pascal Strings
+Strings begin with their length, and bytes of the string follow.
+@end table
+
+@section Error Status Vector
+
+Firebird has an ``error status vector'' type which is supplied to all function calls.  While in many C examples an array of a fixed size is passed in to a pointer to an array, the Nim version uses strict type checking.  You @emph{must} use the @code{ISC_STATUS_ARRAY} type.  This type is passed through using @code{var} to avoid polluting most calls with @code{ptr} related code.  Using these types ensures that should Firebird change the size of the status vector, no effort is required on your part to support that change.
+
+@section Variadic Arguments
+
+While Nim supports variadic arguments (through the @code{varargs} pragma) it appears to only do so with @code{cstring} parameters.  In these situations we have wrapped a sane default.  Firebird has alternative (non-vararg) means to support Pascal-based languages, we have not investigated using those through a Nimized routine as of yet.
+
+@node Connecting to Databases
+@chapter Connecting to Databases
+
+To interact with a database in Firebird you must @dfn{attach} one.  A successful attachment represents a connection between the client library and that database.  More than one database may be attached at a time@footnote{The API to do this is presently not wrapped.} which is helpful for moving data between them or performing cross-database operations.  When you are done, you must @dfn{detach} a connection (which disconnects it.)
+
+@section Functions
 
 @deftypefn Proc ISC_STATUS isc_attach_database @var{status_vector}: ref ISC_STATUS_ARRAY; @var{db_name}: cstring; @var{db}: ref isc_db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
 
@@ -60,7 +84,19 @@ Handle to the database to be freed.
 @node Transactions
 @chapter Transactions
 
-@deftypefn Proc ISC_STATUS isc_start_transaction status: ref ISC_STATUS_ARRAY; transaction: ref isc_tr_handle; db: var isc_db_handle; tpb_length: cushort; tpb: cstring
+Transactions allow for atomic changes to be made on one or more databases.  You @dfn{start} a transaction, make SQL calls using other functions, and finally either @dfn{commit} or @dfn{rollback} that transaction.
+
+@table @asis
+@item Commit
+All changes in the transaction are made.
+
+@item Rollback
+All changes in the transaction are aborted; the database will remain in the state it was in as though nothing was done.
+@end table
+
+@section Functions
+
+@deftypefn Proc ISC_STATUS isc_start_transaction @var{status}: ref ISC_STATUS_ARRAY; @var{transaction}: ref isc_tr_handle; @var{db}: var isc_db_handle; @var{tpb_length}: cushort; @var{tpb}: cstring
 
 Starts a new transaction, storing a handle to the transaction within @var{transaction}. The database in question is specified with the handle @var{db}. If a transaction parameter buffer is used, its length and string are supplied. The nimized version of this function defaults both transaction parameter buffer options to nil.
 
@@ -71,34 +107,42 @@ Firebird supports transactions against multiple open databases; the API for doin
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_start_transaction()}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_rollback_transaction status: ref ISC_STATUS_ARRAY, transaction: ref isc_tr_handle
+@deftypefn Proc ISC_STATUS isc_rollback_transaction @var{status}: ref ISC_STATUS_ARRAY; @var{transaction}: ref isc_tr_handle
 
 Aborts a transaction; any changes that would have been made inside of it are not made. The database remains unchanged.
 @end deftypefn
 
 @anchor{isc_commit_transaction}
-@deftypefn Proc ISC_STATUS isc_commit_transaction status: var ISC_STATUS_ARRAY; tr: var isc_tr_handle
+@deftypefn Proc ISC_STATUS isc_commit_transaction @var{status}: var ISC_STATUS_ARRAY; @var{transaction}: var isc_tr_handle
 
 Commits a transaction; any changes that would have been made inside of it are now made if possible.  Should an error occur while trying to commit any data, @emph{none} of the changes will be made.
 @end deftypefn
 
-@node Running queries
-@chapter Running queries
+@include xsqlda.texi
+
+@node Querying
+@chapter Querying
+
+A @dfn{query} allows you to run SQL against an attached database.  Queries have lifecycles just like database attachments, though in some cases they can be managed for you.  We call these ``types'' of queries:
+
+@table @dfn
+@item Immediate
+Some SQL is allocated, prepared, executed, and freed in the same call.  Useful for routines which are run infrequently and have no special needs.
+
+@item Prepared
+You manage the lifecycle yourself.  Queries which are run many times, or have special requirements, are best dealt with as ``prepared'' queries.
+@end table
+
+Queries can also be associated with a transaction.  While some queries are called ``immediate,'' that does not mean they ignore the rules of transactions.  An ``immediate'' query only means it is created and run in a single call to the client library.
 
 @anchor{Immediate Queries}
 @section Immediate Queries
 
-An immediate query is one where its @dfn{statement} is prepared, executed, and deleted, in one call. A query which is run very infrequently or prepares a database might be run immediately. For queries that are going to be run many times within an application's lifecycle, refer to @ref{Prepared Queries}.  Immediate queries also do not allow values to be @dfn{bound} to placeholders and so are unsuitable for any query which accepts information from untrusted sources.
-
-@quotation Note
-An immediate query only means a statement is not prepared in advance. It does @emph{not} mean the statement bypasses any pending transactions.
-@end quotation
-
-@deftypefn Proc ISC_STATUS isc_dsql_execute_immediate status: var ISC_STATUS_ARRAY; db: var isc_db_handle; transaction: var isc_tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
+@deftypefn Proc ISC_STATUS isc_dsql_execute_immediate @var{status}: var ISC_STATUS_ARRAY; @var{db}: var isc_db_handle; @var{transaction}: var isc_tr_handle; @var{query}: cstring; @var{dialect}: cushort = SQL_DIALECT_CURRENT; var{xsql}: ptr XSQLDA = nil
 
 Runs a statement that does not return data.
 
-If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should initially be zero. A handle to the new database is written to @var{db}, and a new transaction is started whom's handle is written to @var{transaction}. You must commit the transaction to finish creating the database. @xref{isc_commit_transaction}
+If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should initially be zero. A handle to the new database is written to @var{db}, and a new transaction is started whom's handle is written to @var{transaction}. You must commit the transaction to finish creating the database. @xref{isc_commit_transaction}@.
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute_immediate()}
 @end deftypefn
@@ -197,14 +241,6 @@ Runs a previously prepared statement.  @xref{isc_dsql_prepare}@.
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute2()}
 @end deftypefn
 
-@subsection Extraction
-
-@deftypefn Proc ISC_STATUS isc_dsql_fetch status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
-Retrieves the next row of results from an executed query.  Values are read in to @var{outx}.
-
-@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_fetch()}
-@end deftypefn
-
 @section Unfiled
 
 @deftypefn Proc ISC_STATUS isc_dsql_sql_info status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; item_length: cshort; item: cstring; blen: cshort; buf: cstring
@@ -223,99 +259,7 @@ This could be better documented, but I have no idea what the parameters are or h
 Returns the SQL Code from the @var{status} error vector.  SQL Codes are set from actions such as executing statements.  Codes represent special situations such as failing to insert new rows due to constraint violations.
 @end deftypefn
 
-@node User Management
-@chapter User Management
-
-@deftypefn Proc ISC_STATUS isc_add_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
-@end deftypefn
-
-@deftypefn Proc ISC_STATUS isc_delete_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
-@end deftypefn
-
-@deftypefn Proc ISC_STATUS isc_modify_user @var{status}: var ISC_STATUS_ARRAY; data: var USER_SEC_DATA
-@end deftypefn
-
-@node XSQLDA
-@chapter XSQLDA
-
-@deftypefn Template int XSQLDA_LENGTH n: int
-Returns the amount of memory which must be allocated to store an @code{XSQLDA} object with @var{n} variables.
-@end deftypefn
-
-@anchor{make_xsqlda}
-@deftypefn Proc PXSQLDA make_xsqlda vars: int
-Allocates a new @code{XSQLDA} in unmanaged memory, with enough slots for @var{vars} variables.  Must be freed manually, @xref{free_xsqlda}@.
-@end deftypefn
-
-@anchor{free_xsqlda}
-@deftypefn Proc void free_xsqlda self: PXSQLDA; free_children: bool = true
-Frees an @code{XSQLDA} that was previously allocated.  @xref{make_xsqlda}@.
-
-If @var{free_children} is @code{true}, pointers within the variable that are non-@code{nil} will be freed with Nim's built-in @code{dealloc} routine.  If you are using pointers to local data buffers, or cheeky pointer manipulations with @code{alloc} memory, set this to @code{false}.
-@end deftypefn
-
-@deftypefn Proc PXSQLVAR [] self: PXSQLDA; index: int
-Accesses the @var{index}'th variable within the @code{XSQLDA} object.  Assertions perform range checking in debug builds.  As a pointer is returned, changes to the result equal changes in the original @code{XSQLDA} object.  It goes without saying that values returned by this indexer do not live past the @code{XSQLDA} that they were taken from.
-@end deftypefn
-
-@section XSQL Variable Type
-
-@anchor{XSQLVAR}
-@example
-XSQLVAR* @{.importc, header: ibase_h.@} = object
-  sqltype*: ISC_SHORT
-  sqlscale*: ISC_SHORT
-  sqlsubtype*: ISC_SHORT
-  sqllen*: ISC_SHORT
-  sqldata*: pointer
-  sqlind*: ptr ISC_SHORT
-  sqlname_length*: ISC_SHORT
-  sqlname*: array[0..31, ISC_SCHAR]
-  relname_length*: ISC_SHORT
-  relname*: array[0..31, ISC_SCHAR]
-  ownname_length*: ISC_SHORT
-  ownname*: array[0..31, ISC_SCHAR]
-  aliasname_length*: ISC_SHORT
-  aliasname*: array[0..31, ISC_SCHAR]
-@end example
-
-An @code{XSQLVAR} can represent either a variable going in to the database via a prepared statement (@xref{Prepared Queries}), or coming out of the database via a query.
-
-@vtable @code
-@item sqltype
-The expected SQL type (when describing inputs to a prepared statement), the SQL type actually provided (when providing parameters to a prepared statement), or the data type returned by a query (when receiving data from the database.)
-
-When assigning a data type to this field, add one to the type.  For example @code{SQL_TEXT + 1}.
-
-@xref{SQL Data Types}@.
-
-@anchor{sqlsubtype}
-@item sqlsubtype
-Subtypes provide more information about a kind of thing.  For example, some blobs represent different types of information.  The subtype field tells you what kind of information is stored in the bob.
-
-In the case of @code{SQL_BLOB}, see @ref{blob subtypes}@.
-
-@item sqllen
-The number of bytes available in @var{sqldata} to read or write to.  Adjust this to either the @code{sizeof} a type (when using numeric types) or the available space in a text buffer when dealing with strings.
-
-@item sqldata
-A pointer to memory which contains the value either going in to, or coming out of the database.  May either be a reference to local variables@footnote{Be warned that since XSQLDAs are in memory not controlled by the garbage collector, there is no way for Nim to know an object is still in use by Firebird.  You should expect pointers to local values are valid only for Firebird calls within the proc which made the assignments.} or memory created with Nim's @code{alloc} routine.
-
-@item sqlind
-A pointer to a @code{cshort}.  Dereferenced, its value is interpreted as follows:
-
-@table @samp
-@item 0
-A value is not @code{NULL} in SQL terms.
-
-@item -1
-A value is @code{NULL} in SQL terms.
-
-@end table
-
-@end vtable
-
-@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/XSQLVAR_Field_Descriptions}
+@include cursors.texi
 
 @node Blobs
 @chapter Blobs
@@ -407,67 +351,6 @@ BLR (internal Firebird stuff).
 
 @cite{http://www.firebirdfaq.org/faq165/}
 
-@node SQL Data Types
-@chapter SQL Data Types
-
-As Firebird's documentation is lacking on which specific types match up to which SQL types, a convenient mapping of SQL types to Nim is provided:
-
-@multitable {SQL_TIMESTAMP} {Memory buffer}
-@headitem Type name
-@tab Nim type
-@item SQL_TEXT
-@tab Memory buffer
-@item SQL_VARYING
-@tab Memory buffer
-@item SQL_SHORT
-@tab cshort
-@item SQL_LONG
-@tab clong
-@item SQL_FLOAT
-@tab cfloat
-@item SQL_DOUBLE
-@tab cdouble
-@item SQL_D_FLOAT
-@tab ???
-@item SQL_TIMESTAMP
-@tab ISC_TIMESTAMP
-@item SQL_BLOB
-@tab GDS_QUAD
-@item SQL_ARRAY
-@tab GDS_QUAD
-@item SQL_QUAD
-@tab GDS_QUAD
-@item SQL_TYPE_TIME
-@tab ISC_TIME
-@item SQL_TYPE_DATE
-@tab ISC_DATE
-@item SQL_INT64
-@tab int64
-@item SQL_BOOLEAN
-@tab ???
-@item SQL_NULL
-@tab ???
-@end multitable
-
-@var{SQL_DATE} is synonymous with @var{SQL_TIMESTAMP}.
-
-@code{SQL_BLOB} has multiple sub-types, see @ref{blob subtypes}@.
-
-@quotation Memory buffer
-These types take a raw pointer to memory, where text is stored.  The @var{sqllen} field of an @code{XSQLVAR} is used to determine how long the buffer must be (when receiving data) or actually is (when sending data.)  @xref{XSQLVAR}@.
-@end quotation
-
-@cite{Firebird 3.0's example/api/*.c files}
-
-@node Cursors
-@chapter Cursors
-
-@deftypefn Proc ISC_STATUS isc_dsql_set_cursor_name status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; name: cstring; unused: cushort = 0
-Sets the cursor @var{name} for a given @var{statement}.
-
-@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_set_cursor_name()}
-@end deftypefn
-
 @node Arrays
 @chapter Arrays
 
@@ -491,17 +374,6 @@ Reads @var{buflen} bytes in to buffer @var{buf} from the array with a handle @va
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_array_put_slice2()}
 @end deftypefn
 
-@node Silliness with Numbers
-@chapter Silliness with Numbers
-
-@deftypefn Proc ISC_LONG isc_vax_integer buf: pointer; size: cshort
-@deftypefnx Proc ISC_INT64 isc_portable_integer buf: pointer; size: cshort
-
-Flips the byte order of numbers, converting them from little-endian to big-endian and vice versa.  @var{buf} is a pointer to the number being converted, while @var{size} is the number of bytes for the integer type.  @code{isc_vax_integer} supports lengths of 1, 2 and 4 bytes.  @code{isc_portable_integer} supports lengths of 1, 2, 4 and 8 bytes.
-
-@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_vax_integer()} @sp 0
-@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_portable_integer()}
-@end deftypefn
 
 @node Events
 @chapter Events
@@ -538,6 +410,58 @@ Subscribes to a notification, similar to @code{isc_que_events}. Unlike @code{isc
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_wait_for_event()}
 @end deftypefn
+
+@node User Management
+@chapter User Management
+
+@quotation Note
+This section is poorly documented, and needs feedback from Firebird users.
+@end quotation
+
+@section USER_SEC_DATA Type
+
+@example
+USER_SEC_DATA* @{.importc, header: ibase_h.@} = object
+  sec_flags*: cshort
+  uid*: cint
+  gid*: cint
+  protocol*: cint
+  server*: cstring
+  user_name*: cstring
+  password*: cstring
+  group_name*: cstring
+  first_name*: cstring
+  middle_name*: cstring
+  last_name*: cstring
+  dba_user_name*: cstring  # @r{Username to authenticate changes to users.}
+  dba_password*: cstring   # @r{Password to authenticate changes to users.}
+@end example
+
+@section Functions
+
+@deftypefn Proc ISC_STATUS isc_add_user @var{status}: var ISC_STATUS_ARRAY; @var{data}: var USER_SEC_DATA
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_delete_user @var{status}: var ISC_STATUS_ARRAY; @var{data}: var USER_SEC_DATA
+@end deftypefn
+
+@deftypefn Proc ISC_STATUS isc_modify_user @var{status}: var ISC_STATUS_ARRAY; @var{data}: var USER_SEC_DATA
+@end deftypefn
+
+
+@node Silliness with Numbers
+@chapter Silliness with Numbers
+
+@deftypefn Proc ISC_LONG isc_vax_integer buf: pointer; size: cshort
+@deftypefnx Proc ISC_INT64 isc_portable_integer buf: pointer; size: cshort
+
+Flips the byte order of numbers, converting them from little-endian to big-endian and vice versa.  @var{buf} is a pointer to the number being converted, while @var{size} is the number of bytes for the integer type.  @code{isc_vax_integer} supports lengths of 1, 2 and 4 bytes.  @code{isc_portable_integer} supports lengths of 1, 2, 4 and 8 bytes.
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_vax_integer()} @sp 0
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_portable_integer()}
+@end deftypefn
+
+@include sqltypes.texi
 
 @node Index of Procs
 @appendix Index of Procs

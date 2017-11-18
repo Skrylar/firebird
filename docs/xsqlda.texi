@@ -1,0 +1,96 @@
+
+@node XSQLDA and XSQLVAR
+@chapter XSQLDA and XSQLVAR
+
+@menu
+* XSQLDA:: An SQL data array.
+* XSQLVAR:: A single value within a data array.
+@end menu
+
+@node XSQLDA
+@section XSQLDA
+
+An @code{XSQDLA} is an object you need to understand before you can deal with queries and other useful database code.  @code{XSQLDA} is basically a block of @dfn{variables} described by the @code{XSQLVAR} object.  You create one, tell it how many variables it can maximally support, then pass it to various database functions when requested.  They then write (up to this maximum) number of values.  Each variable can be accessed individually as well.
+
+@subsection Functions
+
+@deftypefn Template int XSQLDA_LENGTH n: int
+Returns the amount of memory which must be allocated to store an @code{XSQLDA} object with @var{n} variables.
+@end deftypefn
+
+@anchor{make_xsqlda}
+@deftypefn Proc PXSQLDA make_xsqlda vars: int
+Allocates a new @code{XSQLDA} in unmanaged memory, with enough slots for @var{vars} variables.  Must be freed manually, @xref{free_xsqlda}@.
+@end deftypefn
+
+@anchor{free_xsqlda}
+@deftypefn Proc void free_xsqlda self: PXSQLDA; free_children: bool = true
+Frees an @code{XSQLDA} that was previously allocated.  @xref{make_xsqlda}@.
+
+If @var{free_children} is @code{true}, pointers within the variable that are non-@code{nil} will be freed with Nim's built-in @code{dealloc} routine.  If you are using pointers to local data buffers, or cheeky pointer manipulations with @code{alloc} memory, set this to @code{false}.
+@end deftypefn
+
+@deftypefn Proc PXSQLVAR [] self: PXSQLDA; index: int
+Accesses the @var{index}'th variable within the @code{XSQLDA} object.  Assertions perform range checking in debug builds.  As a pointer is returned, changes to the result equal changes in the original @code{XSQLDA} object.  It goes without saying that values returned by this indexer do not live past the @code{XSQLDA} that they were taken from.
+@end deftypefn
+
+@node XSQLVAR
+@section XSQLVAR
+
+An @code{XSQLVAR} stores information about a single variable within an @code{XSLDA}.
+
+@example
+XSQLVAR* @{.importc, header: ibase_h.@} = object
+  sqltype*: ISC_SHORT
+  sqlscale*: ISC_SHORT
+  sqlsubtype*: ISC_SHORT
+  sqllen*: ISC_SHORT
+  sqldata*: pointer
+  sqlind*: ptr ISC_SHORT
+  sqlname_length*: ISC_SHORT
+  sqlname*: array[0..31, ISC_SCHAR]
+  relname_length*: ISC_SHORT
+  relname*: array[0..31, ISC_SCHAR]
+  ownname_length*: ISC_SHORT
+  ownname*: array[0..31, ISC_SCHAR]
+  aliasname_length*: ISC_SHORT
+  aliasname*: array[0..31, ISC_SCHAR]
+@end example
+
+An @code{XSQLVAR} can represent either a variable going in to the database via a prepared statement (@xref{Prepared Queries}), or coming out of the database via a query.
+
+@vtable @code
+@item sqltype
+The expected SQL type (when describing inputs to a prepared statement), the SQL type actually provided (when providing parameters to a prepared statement), or the data type returned by a query (when receiving data from the database.)
+
+When assigning a data type to this field, add one to the type.  For example @code{SQL_TEXT + 1}.
+
+@xref{SQL Data Types}@.
+
+@anchor{sqlsubtype}
+@item sqlsubtype
+Subtypes provide more information about a kind of thing.  For example, some blobs represent different types of information.  The subtype field tells you what kind of information is stored in the bob.
+
+In the case of @code{SQL_BLOB}, see @ref{blob subtypes}@.
+
+@item sqllen
+The number of bytes available in @var{sqldata} to read or write to.  Adjust this to either the @code{sizeof} a type (when using numeric types) or the available space in a text buffer when dealing with strings.
+
+@item sqldata
+A pointer to memory which contains the value either going in to, or coming out of the database.  May either be a reference to local variables@footnote{Be warned that since XSQLDAs are in memory not controlled by the garbage collector, there is no way for Nim to know an object is still in use by Firebird.  You should expect pointers to local values are valid only for Firebird calls within the proc which made the assignments.} or memory created with Nim's @code{alloc} routine.
+
+@item sqlind
+A pointer to a @code{cshort}.  Dereferenced, its value is interpreted as follows:
+
+@table @samp
+@item 0
+A value is not @code{NULL} in SQL terms.
+
+@item -1
+A value is @code{NULL} in SQL terms.
+
+@end table
+
+@end vtable
+
+@cite{http://docwiki.embarcadero.com/InterBase/XE7/en/XSQLVAR_Field_Descriptions}
