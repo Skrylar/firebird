@@ -3,24 +3,24 @@
 
 import ../firebird3
 
-var status_vector: ISC_STATUS_ARRAY
-var db: isc_db_handle
-var transaction: isc_tr_handle
+var status_vector: STATUS_ARRAY
+var db: db_handle
+var transaction: tr_handle
 
 block thingdo:
   # create test database
-  if isc_dsql_execute_immediate(status_vector, db, transaction, "create database 'ex02.fdb'") != 0:
+  if dsql_execute_immediate(status_vector, db, transaction, "create database 'ex02.fdb'") != 0:
     echo "Failed to create database."
     break thingdo
-  isc_commit_transaction(status_vector, transaction)
-  isc_detach_database(status_vector, db)
+  commit_transaction(status_vector, transaction)
+  detach_database(status_vector, db)
 
-  if isc_attach_database(status_vector, "ex02.fdb", db) != 0:
+  if attach_database(status_vector, "ex02.fdb", db) != 0:
     echo "Failed to attach database."
     break thingdo
 
-  isc_start_transaction(status_vector, transaction, db)
-  isc_dsql_execute_immediate(status_vector, db, transaction, "CREATE TABLE things(when: DATE)")
-  isc_commit_transaction(status_vector, db)
+  start_transaction(status_vector, transaction, db)
+  dsql_execute_immediate(status_vector, db, transaction, "CREATE TABLE things(when: DATE)")
+  commit_transaction(status_vector, db)
 
-  isc_detach_database(status_vector, db)
+  detach_database(status_vector, db)
