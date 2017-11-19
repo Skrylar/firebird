@@ -12,13 +12,13 @@ Cursors are related to @code{WHERE CURRENT OF @samp{cursor name}} SQL code.
 
 @section Functions
 
-@deftypefn Proc ISC_STATUS isc_dsql_set_cursor_name status: var ISC_STATUS_ARRAY; statement: var isc_stmt_handle; name: cstring; unused: cushort = 0
+@deftypefn Proc STATUS dsql_set_cursor_name status: var STATUS_ARRAY; statement: var stmt_handle; name: cstring; unused: cushort = 0
 Sets the cursor @var{name} for a given @var{statement}.
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_set_cursor_name()}
 @end deftypefn
 
-@deftypefn Proc ISC_STATUS isc_dsql_fetch status: ref ISC_STATUS_ARRAY; statement: var isc_stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
+@deftypefn Proc STATUS dsql_fetch status: ref STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
 
 Advances the statement's cursor forward by oen row.  The new record's values are written to @var{outx}.
 

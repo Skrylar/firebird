@@ -20,9 +20,9 @@ As Firebird's documentation is lacking on which specific types match up to which
 @item SQL_D_FLOAT
 @tab ???
 @item SQL_TIMESTAMP
-@tab ISC_TIMESTAMP
+@tab TIMESTAMP
 @item SQL_DATE@footnote{Date is a synonym for Timestamp.}
-@tab ISC_TIMESTAMP
+@tab TIMESTAMP
 @item SQL_BLOB@footnote{Blob has multiple sub-types, see @ref{blob subtypes}@.}
 @tab GDS_QUAD
 @item SQL_ARRAY
@@ -30,9 +30,9 @@ As Firebird's documentation is lacking on which specific types match up to which
 @item SQL_QUAD
 @tab GDS_QUAD
 @item SQL_TYPE_TIME
-@tab ISC_TIME
+@tab TIME
 @item SQL_TYPE_DATE
-@tab ISC_DATE
+@tab DATE
 @item SQL_INT64
 @tab int64
 @item SQL_BOOLEAN
