@@ -1,4 +1,7 @@
 
+{.passc: staticExec("fb_config --cflags").}
+{.passl: "-lfbclient".}
+
 assert int.sizeof == pointer.sizeof
 
 const

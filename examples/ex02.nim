@@ -1,6 +1,4 @@
 
-{.passl: "-lfbembed".}
-
 import ../firebird3
 
 var status_vector: STATUS_ARRAY
