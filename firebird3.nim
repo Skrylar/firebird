@@ -51,6 +51,15 @@ type
   STATUS_ARRAY* = array[0..(STATUS_LENGTH-1), STATUS]
   FB_SQLSTATE_STRING* = array[0..(FB_SQLSTATE_SIZE-1), cchar]
 
+type
+  FirebirdException* = object of Exception
+    vector*: STATUS_ARRAY
+
+proc new_firebird_exception*(vector: var STATUS_ARRAY): ref FirebirdException {.inline.} =
+  # TODO interrogate error vector for a proper string
+  result = newexception(FirebirdException, "Firebird error.")
+  deepcopy(result.vector, vector)
+
 #* Define type, export and other stuff based on c/c++ and Windows */
 #******************************************************************/
 
@@ -89,7 +98,7 @@ type
 #*******************************************************************/
 
 type
-  QUAD_t* {.importc: "GDS_QUAD_t", header: ibase_h.} = object
+  QUAD_t* {.importc: "GDS_QUAD", header: ibase_h.} = object
     # NB these were aliased from isc_quad_*, but nim doesn't have #define
     gds_quad_high*: int32
     gds_quad_low*: uint32
@@ -356,19 +365,32 @@ const
 
 proc attach_database(status: var STATUS_ARRAY; db_name_length: cshort; db_name: cstring; db: var db_handle; parm_buffer_length: cshort = 0; parm_buffer: cstring = nil): STATUS {.importc: "isc_attach_database", header: ibase_h.}
 
-proc attach_database*(status_vector: var STATUS_ARRAY; db_name: cstring; db: var db_handle; parm_buffer_length: cshort = 0; parm_buffer: cstring = nil): STATUS {.inline.} =
-  result = attach_database(status_vector, 0, db_name, db, parm_buffer_length, parm_buffer)
+proc attach_database*(status_vector: var STATUS_ARRAY; db_name: cstring; db: var db_handle; parm_buffer_length: cshort = 0; parm_buffer: cstring = nil) {.inline.} =
+  if attach_database(status_vector, 0, db_name, db, parm_buffer_length, parm_buffer) != 0:
+    raise new_firebird_exception(status_vector)
 
 # TODO STATUS isc_array_gen_sdl(status: var STATUS_ARRAY, const ARRAY_DESC*, cshort*, cuchar*, cshort*);
 
-proc array_get_slice*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD_t; desc: var ARRAY_DESC; buf: pointer; buflen: var int32): STATUS {.importc: "isc_array_get_slice", header: ibase_h.}
+proc array_get_slice_inner(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD_t; desc: var ARRAY_DESC; buf: pointer; buflen: var int32): STATUS {.importc: "isc_array_get_slice", header: ibase_h.}
 
-proc array_lookup_bounds*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; table_name, column_name: cstring; desc: var ARRAY_DESC): STATUS {.importc: "isc_array_lookup_bounds", header: ibase_h.}
+proc array_get_slice*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD_t; desc: var ARRAY_DESC; buf: pointer; buflen: var int32) {.inline.} =
+  if array_get_slice_inner(status, db, transaction, array_id, desc, buf, buflen) != 0:
+    raise new_firebird_exception(status)
+
+proc array_lookup_bounds_inner(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; table_name, column_name: cstring; desc: var ARRAY_DESC): STATUS {.importc: "isc_array_lookup_bounds", header: ibase_h.}
+
+proc array_lookup_bounds*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; table_name, column_name: cstring; desc: var ARRAY_DESC) {.inline.} =
+  if array_lookup_bounds_inner(status, db, transaction, table_name, column_name, desc) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_array_lookup_desc(status: var STATUS_ARRAY, db: var db_handle, transaction: var tr_handle, const cstring, const cstring, ARRAY_DESC*);
 # TODO STATUS isc_array_set_desc(status: var STATUS_ARRAY, const cstring, const cstring, const short*, const short*, const short*, ARRAY_DESC*);
 
-proc array_put_slice*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD_t; desc: var ARRAY_DESC; buf: pointer; buflen: var int32): STATUS {.importc: "isc_array_put_slice", header: ibase_h.}
+proc array_put_slice_inner(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD_t; desc: var ARRAY_DESC; buf: pointer; buflen: var int32): STATUS {.importc: "isc_array_put_slice", header: ibase_h.}
+
+proc array_put_slice*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD_t; desc: var ARRAY_DESC; buf: pointer; buflen: var int32) {.inline.} =
+  if array_put_slice_inner(status, db, transaction, array_id, desc, buf, buflen) != 0:
+    raise new_firebird_exception(status)
 
 # TODO void isc_blob_default_desc(BLOB_DESC*, const cuchar*, const cuchar*);
 # TODO STATUS isc_blob_gen_bpb(status: var STATUS_ARRAY, const BLOB_DESC*, const BLOB_DESC*, unsigned short, cuchar*, unsigned short*);
@@ -377,16 +399,36 @@ proc array_put_slice*(status: var STATUS_ARRAY; db: var db_handle; transaction: 
 # TODO STATUS isc_blob_set_desc(status: var STATUS_ARRAY, const cuchar*, const cuchar*, short, short, short, BLOB_DESC*);
 # TODO STATUS isc_cancel_blob(status: var STATUS_ARRAY, blob_handle *);
 
-proc cancel_events*(status: var STATUS_ARRAY; db: var db_handle; event_id: var int32): STATUS {.importc: "isc_cancel_events", header: ibase_h.}
+proc cancel_events_inner(status: var STATUS_ARRAY; db: var db_handle; event_id: var int32): STATUS {.importc: "isc_cancel_events", header: ibase_h.}
 
-proc close_blob*(status: var STATUS_ARRAY; blob: var blob_handle): STATUS {.importc: "isc_close_blob", header: ibase_h.}
+proc cancel_events*(status: var STATUS_ARRAY; db: var db_handle; event_id: var int32) {.inline.} =
+  if cancel_events_inner(status, db, event_id) != 0:
+    raise new_firebird_exception(status)
+
+proc close_blob_inner(status: var STATUS_ARRAY; blob: var blob_handle): STATUS {.importc: "isc_close_blob", header: ibase_h.}
+
+proc close_blob*(status: var STATUS_ARRAY; blob: var blob_handle) {.inline.} =
+  if close_blob_inner(status, blob) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_commit_retaining(status: var STATUS_ARRAY, tr_handle *);
-proc commit_transaction*(status: var STATUS_ARRAY; transaction: var tr_handle): STATUS {.importc: "isc_commit_transaction", header: ibase_h, discardable.}
+proc commit_transaction_inner(status: var STATUS_ARRAY; transaction: var tr_handle): STATUS {.importc: "isc_commit_transaction", header: ibase_h, discardable.}
 
-proc create_blob*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t): STATUS {.importc: "isc_create_blob", header: ibase_h.}
+proc commit_transaction*(status: var STATUS_ARRAY; transaction: var tr_handle) {.inline.} =
+  if commit_transaction_inner(status, transaction) != 0:
+    raise new_firebird_exception(status)
 
-proc create_blob*(status: var STATUS_ARRAY, db: var db_handle, transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t; bpb_len: cshort; bpb: cstring): STATUS {.importc: "isc_create_blob2", header: ibase_h.}
+proc create_blob_inner(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t): STATUS {.importc: "isc_create_blob", header: ibase_h.}
+
+proc create_blob*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t) {.inline.} =
+  if create_blob_inner(status, db, transaction, blob, blob_id) != 0:
+    raise new_firebird_exception(status)
+
+proc create_blob_inner(status: var STATUS_ARRAY, db: var db_handle, transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t; bpb_len: cshort; bpb: cstring): STATUS {.importc: "isc_create_blob2", header: ibase_h.}
+
+proc create_blob*(status: var STATUS_ARRAY, db: var db_handle, transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t; bpb_len: cshort; bpb: cstring) {.inline.} =
+  if create_blob_inner(status, db, transaction, blob, blob_id, bpb_len, bpb) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_create_database(status: var STATUS_ARRAY, short, const cstring, db: var isc_db_handle, short, const cstring, short);
 # TODO STATUS isc_database_info(status: var STATUS_ARRAY, db: var db_handle, short, const cstring, short, cstring);
@@ -395,7 +437,11 @@ proc create_blob*(status: var STATUS_ARRAY, db: var db_handle, transaction: var 
 # TODO void isc_decode_sql_time(const TIME*, pointer);
 # TODO void isc_decode_timestamp(const TIMESTAMP*, pointer);
 
-proc detach_database*(status: var STATUS_ARRAY, db: var db_handle): STATUS {.importc: "isc_detach_database", header: ibase_h, discardable.}
+proc detach_database_inner(status: var STATUS_ARRAY, db: var db_handle): STATUS {.importc: "isc_detach_database", header: ibase_h, discardable.}
+
+proc detach_database*(status: var STATUS_ARRAY, db: var db_handle) {.inline.} =
+  if detach_database_inner(status, db) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_drop_database(status: var STATUS_ARRAY_ARRAY, db: var db_handle);
 
@@ -403,47 +449,78 @@ proc dsql_allocate_statement_inner(status: var STATUS_ARRAY; db: var db_handle; 
 
 proc dsql_alloc_statement2_inner(status: var STATUS_ARRAY; db: var db_handle; statement: var stmt_handle): STATUS {.importc: "isc_dsql_alloc_statement2", header: ibase_h.}
 
-proc dsql_allocate_statement*(status: var STATUS_ARRAY; db: var db_handle; statement: var stmt_handle; autofree: bool = true): STATUS {.inline.} =
+proc dsql_allocate_statement*(status: var STATUS_ARRAY; db: var db_handle; statement: var stmt_handle; autofree: bool = true) {.inline.} =
+  var derp: STATUS
   if autofree:
-    result = dsql_allocate_statement_inner(status, db, statement)
+    derp = dsql_allocate_statement_inner(status, db, statement)
   else:
-    result = dsql_alloc_statement2_inner(status, db, statement)
+    derp = dsql_alloc_statement2_inner(status, db, statement)
+  if derp != 0:
+    raise new_firebird_exception(status)
 
-proc dsql_describe*(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA): STATUS {.importc: "isc_dsql_describe", header: ibase_h.}
+proc dsql_describe_inner(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA): STATUS {.importc: "isc_dsql_describe", header: ibase_h.}
 
-proc dsql_describe_bind*(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA): STATUS {.importc: "isc_dsql_describe_bind", header: ibase_h.}
+proc dsql_describe*(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA) {.inline.} =
+  if dsql_describe_inner(status, statement, dialect, outx) != 0:
+    raise new_firebird_exception(status)
+
+proc dsql_describe_bind_inner(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA): STATUS {.importc: "isc_dsql_describe_bind", header: ibase_h.}
+
+proc dsql_describe_bind*(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA) {.inline.} =
+  if dsql_describe_bind_inner(status, statement, dialect, inx) != 0:
+    raise new_firebird_exception(status)
 
 proc dsql_exec_immed2_inner(status: var; db: var; transaction: var; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): STATUS {.importc: "isc_dsql_exec_immed2", header: ibase_h.}
 
-proc dsql_exec_immed2*(status: var; db: var; transaction: var; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): STATUS {.inline, discardable.} =
-  result = dsql_exec_immed2_inner(status, db, transaction, 0, statement, dialect, inx, outx)
+proc dsql_exec_immed2*(status: var; db: var; transaction: var; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): STATUS {.inline.} =
+  if dsql_exec_immed2_inner(status, db, transaction, 0, statement, dialect, inx, outx) != 0:
+    raise new_firebird_exception(status)
 
-proc dsql_execute*(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): STATUS {.importc: "isc_dsql_execute", header: ibase_h.}
+proc dsql_execute_inner(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): STATUS {.importc: "isc_dsql_execute", header: ibase_h.}
 
-proc dsql_execute*(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): STATUS {.importc: "isc_dsql_execute2", header: ibase_h.}
+proc dsql_execute*(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil) {.inline.} =
+  if dsql_execute_inner(status, transaction, statement, dialect, xsql) != 0:
+    raise new_firebird_exception(status)
+
+proc dsql_execute_inner(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil): STATUS {.importc: "isc_dsql_execute2", header: ibase_h.}
+
+proc dsql_execute*(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil) {.inline.} =
+  if dsql_execute_inner(status, transaction, statement, dialect, inx, outx) != 0:
+    raise new_firebird_exception(status)
 
 proc dsql_execute_immediate(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; length: cushort; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): STATUS {.importc: "isc_dsql_execute_immediate", header: ibase_h.}
 
-proc dsql_execute_immediate*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): STATUS {.inline, discardable.} =
-  result = dsql_execute_immediate(status, db, transaction, 0, query, dialect, xsql)
+proc dsql_execute_immediate*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; query: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil) {.inline.} =
+  if dsql_execute_immediate(status, db, transaction, 0, query, dialect, xsql) != 0:
+    raise new_firebird_exception(status)
 
-proc dsql_fetch*(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA): STATUS {.importc: "isc_dsql_fetch", header: ibase_h.}
+proc dsql_fetch_inner(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA): STATUS {.importc: "isc_dsql_fetch", header: ibase_h.}
+
+proc dsql_fetch*(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA) {.inline.} =
+  if dsql_fetch_inner(status, statement, dialect, outx) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_dsql_finish(db: var db_handle);
 
 proc dsql_free_statement_inner(status: var STATUS_ARRAY; statement: var stmt_handle; on_free: cushort): STATUS {.importc: "isc_dsql_free_statement", header: ibase_h.}
 
-proc dsql_free_statement*(status: var STATUS_ARRAY; statement: var stmt_handle; on_free: StatementFreeType): STATUS {.inline.} =
-  result = dsql_free_statement_inner(status, statement, on_free.cushort)
+proc dsql_free_statement*(status: var STATUS_ARRAY; statement: var stmt_handle; on_free: StatementFreeType) {.inline.} =
+  if dsql_free_statement_inner(status, statement, on_free.cushort) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_dsql_insert(status: var STATUS_ARRAY, stmt_handle*, unsigned short, XSQLDA*);
 
 proc dsql_prepare_inner(status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA): STATUS {.importc: "isc_dsql_prepare", header: ibase_h.}
 
 proc dsql_prepare*(status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA): STATUS {.inline.} =
-  result = dsql_prepare_inner(status, transaction, statement_handle, 0, statement, dialect, xsql)
+  if dsql_prepare_inner(status, transaction, statement_handle, 0, statement, dialect, xsql) != 0:
+    raise new_firebird_exception(status)
 
-proc dsql_set_cursor_name*(status: var STATUS_ARRAY; statement: var stmt_handle; name: cstring; unused: cushort = 0): STATUS {.importc: "isc_dsql_set_cursor_name", header: ibase_h.}
+proc dsql_set_cursor_name_inner(status: var STATUS_ARRAY; statement: var stmt_handle; name: cstring; unused: cushort = 0): STATUS {.importc: "isc_dsql_set_cursor_name", header: ibase_h.}
+
+proc dsql_set_cursor_name*(status: var STATUS_ARRAY; statement: var stmt_handle; name: cstring; unused: cushort = 0) {.inline.} =
+  if dsql_set_cursor_name_inner(status, statement, name, unused) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_dsql_sql_info(status: var STATUS_ARRAY, stmt_handle*, short, const cstring, short, cstring);
 # TODO void isc_encode_date(const pointer, QUAD_t*);
@@ -458,12 +535,20 @@ proc event_block*(event_buf, result_buf: var cstring; name_count: cushort): int3
 # TODO void isc_event_counts(uint32*, short, cuchar*, const cuchar *);
 # TODO int isc_modify_dpb(cstring*, short*, unsigned short, const cstring, short); int32 isc_free(cchar *);
 
-proc get_segment*(status: var STATUS_ARRAY; blob: var blob_handle; read_len: var cushort; blen: cushort; buf: ptr int8): STATUS {.importc: "isc_get_segment", header: ibase_h.}
+proc get_segment_inner(status: var STATUS_ARRAY; blob: var blob_handle; read_len: var cushort; blen: cushort; buf: ptr int8): STATUS {.importc: "isc_get_segment", header: ibase_h.}
+
+proc get_segment*(status: var STATUS_ARRAY; blob: var blob_handle; read_len: var cushort; blen: cushort; buf: ptr int8) {.inline.} =
+  if get_segment_inner(status, blob, read_len, blen, buf) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_get_slice(status: var STATUS_ARRAY, db: var db_handle, transaction: var tr_handle, QUAD_t*, short, const cstring, short, const int32*, int32, pointer, int32*);
 # TODO int32 fb_interpret(cstring, unsigned int, const status: var STATUS_ARRAY*);
 
-proc open_blob*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t): STATUS {.importc: "isc_open_blob", header: ibase_h.}
+proc open_blob_inner(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t): STATUS {.importc: "isc_open_blob", header: ibase_h.}
+
+proc open_blob*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD_t) {.inline.} =
+  if open_blob_inner(status, db, transaction, blob, blob_id) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_open_blob2(status: var STATUS_ARRAY, db: var db_handle, transaction: var tr_handle, blob_handle*, QUAD_t*, cushort, const cuchar*);
 
@@ -471,22 +556,35 @@ proc open_blob*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr
 # TODO void isc_print_sqlerror(cshort, const status: var STATUS_ARRAY);
 # TODO STATUS isc_print_status(const status: var STATUS_ARRAY);
 
-proc put_segment*(status: var STATUS_ARRAY; blob: var blob_handle; blen: cushort; buf: ptr int8): STATUS {.importc: "isc_put_segment", header: ibase_h.}
+proc put_segment_inner(status: var STATUS_ARRAY; blob: var blob_handle; blen: cushort; buf: ptr int8): STATUS {.importc: "isc_put_segment", header: ibase_h.}
+
+proc put_segment*(status: var STATUS_ARRAY; blob: var blob_handle; blen: cushort; buf: ptr int8) {.inline.} =
+  if put_segment_inner(status, blob, blen, buf) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_put_slice(status: var STATUS_ARRAY, db: var db_handle, transaction: var tr_handle, QUAD_t*, short, const cstring, short, const int32*, int32, pointer);
 
-proc que_events*(status: var STATUS_ARRAY; db: var db_handle; event_id: var int32; eblen: cshort; eb: cstring; cb: EVENT_CALLBACK; userdata: pointer): STATUS {.importc: "isc_que_events", header: ibase_h.}
+proc que_events_inner(status: var STATUS_ARRAY; db: var db_handle; event_id: var int32; eblen: cshort; eb: cstring; cb: EVENT_CALLBACK; userdata: pointer): STATUS {.importc: "isc_que_events", header: ibase_h.}
+
+proc que_events*(status: var STATUS_ARRAY; db: var db_handle; event_id: var int32; eblen: cshort; eb: cstring; cb: EVENT_CALLBACK; userdata: pointer) {.inline.} =
+  if que_events_inner(status, db, event_id, eblen, eb, cb, userdata) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_rollback_retaining(status: var STATUS_ARRAY, transaction: var tr_handle);
 
-proc rollback_transaction*(status: var STATUS_ARRAY; transaction: var tr_handle): STATUS {.importc: "isc_rollback_transaction", header: ibase_h, discardable.}
+proc rollback_transaction_inner(status: var STATUS_ARRAY; transaction: var tr_handle): STATUS {.importc: "isc_rollback_transaction", header: ibase_h, discardable.}
+
+proc rollback_transaction*(status: var STATUS_ARRAY; transaction: var tr_handle) {.inline.} =
+  if rollback_transaction_inner(status, transaction) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS isc_start_multiple(status: var STATUS_ARRAY, transaction: var tr_handle, short, void *);
 
 proc start_transaction_inner(status: var STATUS_ARRAY; transaction: var tr_handle; handle_count: cshort; db: var db_handle; tpb_length: cushort; tpb: cstring): STATUS {.importc: "isc_start_transaction", header: ibase_h,}
 
-proc start_transaction*(status: var STATUS_ARRAY; transaction: var tr_handle; db: var db_handle; tpb_length: cushort = 0; tpb: cstring = nil): STATUS {.inline, discardable.} =
-  result = start_transaction_inner(status, transaction, 1.cshort, db, tpb_length, tpb)
+proc start_transaction*(status: var STATUS_ARRAY; transaction: var tr_handle; db: var db_handle; tpb_length: cushort = 0; tpb: cstring = nil) {.inline.} =
+  if start_transaction_inner(status, transaction, 1.cshort, db, tpb_length, tpb) != 0:
+    raise new_firebird_exception(status)
 
 # TODO STATUS fb_disconnect_transaction(status: var STATUS_ARRAY, transaction: var tr_handle);
 
