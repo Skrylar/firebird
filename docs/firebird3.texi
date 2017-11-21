@@ -7,8 +7,8 @@
 @top
 @end ifnottex
 
-@node Between Nim and C
-@chapter Between Nim and C
+@node Porting Guide
+@chapter Porting Guide
 
 Firebird's client library is written in C.  There are a few differences between that C library and the Nim wrapper to keep in mind.
 
@@ -47,9 +47,11 @@ Strings begin with their length, and bytes of the string follow.
 @tab uint64
 @end multitable
 
-@section Error Status Vector
+@section Status Vectors and Error Handling
 
-Firebird has an ``error status vector'' type which is supplied to all function calls.  While in many C examples an array of a fixed size is passed in to a pointer to an array, the Nim version uses strict type checking.  You @emph{must} use the @code{STATUS_ARRAY} type.  This type is passed through using @code{var} to avoid polluting most calls with @code{ptr} related code.  Using these types ensures that should Firebird change the size of the status vector, no effort is required on your part to support that change.
+Firebird has an ``error status vector'' type which is supplied to all function calls.  Interbase defines this as an array of twenty words; we use a pre-defined array type instead.  Instead of hard-coding the length or even using a constant, just use the @code{STATUS_VECTOR} type directly.
+
+Additionally we no longer return individual @code{STATUS} codes from functions.  They are internally checked and if a non-zero result is found, a @code{FirebirdException} is thrown.  You may catch this exception and examine the internal details if so desired.
 
 @section Variadic Arguments
 
@@ -62,7 +64,7 @@ To interact with a database in Firebird you must @dfn{attach} one.  A successful
 
 @section Functions
 
-@deftypefn Proc STATUS attach_database @var{status_vector}: var STATUS_ARRAY; @var{db_name}: cstring; @var{db}: var db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
+@deftypefn Proc void attach_database @var{status_vector}: var STATUS_ARRAY; @var{db_name}: cstring; @var{db}: var db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
 
 Attaches a new database.
 
@@ -87,7 +89,7 @@ A specially constructed string, which acts as a set of parameters for the databa
 
 @end deftypefn
 
-@deftypefn Proc STATUS detach_database @var{status}: var STATUS, @var{db}: var db_handle)
+@deftypefn Proc void detach_database @var{status}: var STATUS, @var{db}: var db_handle)
 
 Releases a previously attached database.
 
@@ -119,7 +121,7 @@ All changes in the transaction are aborted; the database will remain in the stat
 
 @section Functions
 
-@deftypefn Proc STATUS start_transaction @var{status}: var STATUS_ARRAY; @var{transaction}: var tr_handle; @var{db}: var db_handle; @var{tpb_length}: cushort; @var{tpb}: cstring
+@deftypefn Proc void start_transaction @var{status}: var STATUS_ARRAY; @var{transaction}: var tr_handle; @var{db}: var db_handle; @var{tpb_length}: cushort; @var{tpb}: cstring
 
 Starts a new transaction, storing a handle to the transaction within @var{transaction}. The database in question is specified with the handle @var{db}. If a transaction parameter buffer is used, its length and string are supplied. The nimized version of this function defaults both transaction parameter buffer options to nil.
 
@@ -130,13 +132,13 @@ Firebird supports transactions against multiple open databases; the API for doin
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_start_transaction()}
 @end deftypefn
 
-@deftypefn Proc STATUS rollback_transaction @var{status}: var STATUS_ARRAY; @var{transaction}: var tr_handle
+@deftypefn Proc void rollback_transaction @var{status}: var STATUS_ARRAY; @var{transaction}: var tr_handle
 
 Aborts a transaction; any changes that would have been made inside of it are not made. The database remains unchanged.
 @end deftypefn
 
 @anchor{commit_transaction}
-@deftypefn Proc STATUS commit_transaction @var{status}: var STATUS_ARRAY; @var{transaction}: var tr_handle
+@deftypefn Proc void commit_transaction @var{status}: var STATUS_ARRAY; @var{transaction}: var tr_handle
 
 Commits a transaction; any changes that would have been made inside of it are now made if possible.  Should an error occur while trying to commit any data, @emph{none} of the changes will be made.
 @end deftypefn
@@ -161,7 +163,7 @@ Queries can also be associated with a transaction.  While some queries are calle
 @anchor{Immediate Queries}
 @section Immediate Queries
 
-@deftypefn Proc STATUS dsql_execute_immediate @var{status}: var STATUS_ARRAY; @var{db}: var db_handle; @var{transaction}: var tr_handle; @var{query}: cstring; @var{dialect}: cushort = SQL_DIALECT_CURRENT; var{xsql}: ptr XSQLDA = nil
+@deftypefn Proc void dsql_execute_immediate @var{status}: var STATUS_ARRAY; @var{db}: var db_handle; @var{transaction}: var tr_handle; @var{query}: cstring; @var{dialect}: cushort = SQL_DIALECT_CURRENT; var{xsql}: ptr XSQLDA = nil
 
 Runs a statement that does not return data.
 
@@ -170,7 +172,7 @@ If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute_immediate()}
 @end deftypefn
 
-@deftypefn Proc STATUS dsql_exec_immed2 status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil
+@deftypefn Proc void dsql_exec_immed2 status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; inx, outx: ptr XSQLDA = nil
 
 Runs a statement which returns no more than a single row of results.
 
@@ -182,7 +184,7 @@ Runs a statement which returns no more than a single row of results.
 
 @subsection Lifecycle
 
-@deftypefn Proc STATUS dsql_allocate_statement status: var STATUS_ARRAY; db: var db_handle; statement: var stmt_handle; autofree: bool = true
+@deftypefn Proc void dsql_allocate_statement status: var STATUS_ARRAY; db: var db_handle; statement: var stmt_handle; autofree: bool = true
 
 Allocates a handle for a prepared statement. @var{autofree} statements are cleaned up when their database is detached, otherwise you must clean up the handle manually.
 
@@ -190,7 +192,7 @@ Allocates a handle for a prepared statement. @var{autofree} statements are clean
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_alloc_statement2()}
 @end deftypefn
 
-@deftypefn Proc STATUS dsql_free_statement status: var STATUS_ARRAY; statement: var stmt_handle; on_free: StatementFreeType
+@deftypefn Proc void dsql_free_statement status: var STATUS_ARRAY; statement: var stmt_handle; on_free: StatementFreeType
 
 Explicitly frees a previously allocated statement.  Not necessary for statements created with @var{autofree = true}.
 
@@ -225,7 +227,7 @@ Like unprepare, but the handle is destroyed after the statement is unprepared.
 @subsection Preparation
 
 @anchor{dsql_prepare}
-@deftypefn Proc STATUS dsql_prepare status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
+@deftypefn Proc void dsql_prepare status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
 @end deftypefn
 
 Statements may contain placeholders, which are specified with the @code{?} (question mark) character.  Use of placeholders prevents SQL injection attacks.  To use placeholders, you must prepare an @code{XSQLDA} object to contain the values which are going in to the placeholder's positions.  For example the following:
@@ -241,13 +243,13 @@ Prepares a statement with a single placeholder: the value assigned to the @samp{
 
 Firebird can analyze a prepared statement and return information about either the values which will be returned from a @code{SELECT} statement, or the placeholders for an @code{INSERT} statement.
 
-@deftypefn Proc STATUS dsql_describe status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
+@deftypefn Proc void dsql_describe status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; outx: ptr XSQLDA
 Analyzes the prepared @var{statement}, and stores the necessary variable definitions for data coming out of the database in @var{outx}.
 
 @cite{Firebird 3.0's example/api/api4.c file}
 @end deftypefn
 
-@deftypefn Proc STATUS dsql_describe_bind(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA)
+@deftypefn Proc void dsql_describe_bind(status: var STATUS_ARRAY; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; inx: ptr XSQLDA)
 Analyzes the prepared @var{statement}, and stores the necessary variable definitions for data going from the program to the query's placeholders in @var{inx}.
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_describe_bind()}
@@ -255,7 +257,7 @@ Analyzes the prepared @var{statement}, and stores the necessary variable definit
 
 @subsection Execution
 
-@deftypefn Proc STATUS dsql_execute status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
+@deftypefn Proc void dsql_execute status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
 Runs a previously prepared statement.  @xref{dsql_prepare}@.
 
 @var{inx} may be left out, or @code{nil}, if a statement has no placeholders.  Statements with placeholders must be given a valid @code{XSQLDA} in the @var{inx} parameter.  @var{inx} contains the input values to replace each placeholder with.
@@ -266,7 +268,7 @@ Runs a previously prepared statement.  @xref{dsql_prepare}@.
 
 @section Unfiled
 
-@deftypefn Proc STATUS dsql_sql_info status: var STATUS_ARRAY; statement: var stmt_handle; item_length: cshort; item: cstring; blen: cshort; buf: cstring
+@deftypefn Proc void dsql_sql_info status: var STATUS_ARRAY; statement: var stmt_handle; item_length: cshort; item: cstring; blen: cshort; buf: cstring
 Retrieves information about a prepared SQL statement.
 
 @quotation Note
@@ -295,13 +297,13 @@ Blobs allow you to store data of varying length within a Firebird database.  Dep
 
 You need to @dfn{create} a blob if creating a new one, or @dfn{open} an existing blob to read from it.
 
-@deftypefn Proc STATUS create_blob status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD[; bpb_len: cshort; bpb: cstring]
+@deftypefn Proc void create_blob status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD[; bpb_len: cshort; bpb: cstring]
 Creates a new blob in the database handled by @var{db}, in a @var{transaction}, storing a handle to the newly created blob in @var{blob} and returning the blob's ID in @var{blob_id}.  You need the @var{blob} handle to write to it (@pxref{put_segment}) and the @var{blob_id} to pass this blob to records via an @code{XSQLVAR}.
 
 It is also possible to provide a @emph{blob parameter buffer}.  Supply the length of the buffer in @var{bpb_len} and the buffer itself in @var{bpb}.  If these two values are not provided, it is assumed there are no special parameters.
 @end deftypefn
 
-@deftypefn Proc STATUS open_blob status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD
+@deftypefn Proc void open_blob status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; blob: var blob_handle; blob_id: var QUAD
 
 @table @var
 @item status
@@ -324,7 +326,7 @@ Identifies a blob to open from the database.
 
 When you are done with a blob, whether created or opened, you will need to @dfn{close} it.
 
-@deftypefn Proc STATUS close_blob status: var STATUS_ARRAY; blob: var blob_handle
+@deftypefn Proc void close_blob status: var STATUS_ARRAY; blob: var blob_handle
 
 @table @var
 @item status
@@ -341,7 +343,7 @@ A handle to a blob previously opened by @code{open_blob}.
 
 @subsection Retrieval
 
-@deftypefn Proc STATUS get_segment status: var STATUS_ARRAY; blob: var blob_handle; read_len: var cushort; blen: cushort; buf: ptr int8
+@deftypefn Proc void get_segment status: var STATUS_ARRAY; blob: var blob_handle; read_len: var cushort; blen: cushort; buf: ptr int8
 Reads the next @var{blen} bytes of data from a @var{blob}, storing the results in @var{buf} and returning the actual number of bytes read to @var{read_len}.
 @end deftypefn
 
@@ -351,7 +353,7 @@ Reads the next @var{blen} bytes of data from a @var{blob}, storing the results i
 @subsection Storage
 
 @anchor{put_segment}
-@deftypefn Proc STATUS put_segment status: var STATUS_ARRAY; blob: var blob_handle; blen: cushort; buf: ptr int8
+@deftypefn Proc void put_segment status: var STATUS_ARRAY; blob: var blob_handle; blen: cushort; buf: ptr int8
 Writes @var{blen} bytes of data from @var{buf} to a given @var{blob}.
 @end deftypefn
 
@@ -377,20 +379,20 @@ BLR (internal Firebird stuff).
 @node Arrays
 @chapter Arrays
 
-@deftypefn Proc STATUS array_lookup_bounds status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; table_name, column_name: cstring; desc: var ARRAY_DESC
+@deftypefn Proc void array_lookup_bounds status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; table_name, column_name: cstring; desc: var ARRAY_DESC
 
 @cite{Firebird 3.0's example/api/api10.c files}@sp 0
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_array_lookup_bounds2()}
 @end deftypefn
 
-@deftypefn Proc STATUS array_get_slice status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD; desc: var ARRAY_DESC; buf: pointer; buflen: var int32
+@deftypefn Proc void array_get_slice status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD; desc: var ARRAY_DESC; buf: pointer; buflen: var int32
 Writes @var{buflen} bytes from the buffer @var{buf} to the array with handle @var{array_id} and described by @var{desc}.  The number of bytes actually written is written back to @var{buflen}.
 
 @cite{Firebird 3.0's example/api/api10.c files}@sp 0
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_array_get_slice2()}
 @end deftypefn
 
-@deftypefn Proc STATUS array_put_slice status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD; desc: var ARRAY_DESC; buf: pointer; buflen: var int32
+@deftypefn Proc void array_put_slice status: var STATUS_ARRAY; db: var db_handle; transaction: var tr_handle; array_id: var QUAD; desc: var ARRAY_DESC; buf: pointer; buflen: var int32
 Reads @var{buflen} bytes in to buffer @var{buf} from the array with a handle @var{array_id} and a description @var{desc}.  The number of bytes actually read is written back to @var{buflen}.
 
 @cite{Firebird 3.0's example/api/api10.c files}@sp 0
@@ -412,20 +414,20 @@ This function accepts a variable number of arguments.  Specify the number of eve
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_event_block()}
 @end deftypefn
 
-@deftypefn Proc STATUS que_events status: var STATUS_ARRAY; db: var db_handle; event_id: var int32; eblen: cshort; eb: cstring; cb: EVENT_CALLBACK; userdata: pointer
+@deftypefn Proc void que_events status: var STATUS_ARRAY; db: var db_handle; event_id: var int32; eblen: cshort; eb: cstring; cb: EVENT_CALLBACK; userdata: pointer
 Registers asynchronous event listeners with database @var{db}.  An ID referring to these listeners is written to @var{event_id}, which may then be used in other procs to ex. cancel the events later on.  @var{eblen} is the length of the event parameter buffer, and @var{eb} is the event parameter buffer.
 
 @cite{Firebird 3.0's example/api/api16.c files}@sp 0
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_que_events()}
 @end deftypefn
 
-@deftypefn Proc STATUS cancel_events status: var STATUS_ARRAY; db: var db_handle; event_id: var int32
+@deftypefn Proc void cancel_events status: var STATUS_ARRAY; db: var db_handle; event_id: var int32
 Cancels all event listeners registered to @var{event_id}.
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_cancel_events()}
 @end deftypefn
 
-@deftypefn Proc STATUS wait_for_event status: var STATUS_ARRAY; db: var db_handle; eb_len: cshort; event_buf, result_buf: cstring
+@deftypefn Proc void wait_for_event status: var STATUS_ARRAY; db: var db_handle; eb_len: cshort; event_buf, result_buf: cstring
 
 Subscribes to a notification, similar to @code{que_events}. Unlike @code{que_events} the call will block until one of the interested events has fired.
 
@@ -462,13 +464,13 @@ USER_SEC_DATA* @{.importc, header: ibase_h.@} = object
 
 @section Functions
 
-@deftypefn Proc STATUS add_user @var{status}: var STATUS_ARRAY; @var{data}: var USER_SEC_DATA
+@deftypefn Proc void add_user @var{status}: var STATUS_ARRAY; @var{data}: var USER_SEC_DATA
 @end deftypefn
 
-@deftypefn Proc STATUS delete_user @var{status}: var STATUS_ARRAY; @var{data}: var USER_SEC_DATA
+@deftypefn Proc void delete_user @var{status}: var STATUS_ARRAY; @var{data}: var USER_SEC_DATA
 @end deftypefn
 
-@deftypefn Proc STATUS modify_user @var{status}: var STATUS_ARRAY; @var{data}: var USER_SEC_DATA
+@deftypefn Proc void modify_user @var{status}: var STATUS_ARRAY; @var{data}: var USER_SEC_DATA
 @end deftypefn
 
 
