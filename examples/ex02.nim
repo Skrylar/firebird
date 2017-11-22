@@ -5,20 +5,21 @@ var status_vector: STATUS_ARRAY
 var db: db_handle
 var transaction: tr_handle
 
-block thingdo:
-  # create test database
-  if dsql_execute_immediate(status_vector, db, transaction, "create database 'ex02.fdb'") != 0:
-    echo "Failed to create database."
-    break thingdo
+try:
+  dsql_execute_immediate(status_vector, db, transaction, "create database 'ex02.fdb'")
+except FirebirdException:
+  echo "Failed to create database.  Perhaps 'ex02.fdb' already exists?"
+  raise
+assert db != 0
+
+start_transaction(status_vector, transaction, db)
+assert transaction != 0
+
+try:
+  dsql_execute_immediate(status_vector, db, transaction, "create table birds(wings int, name varchar(30))")
   commit_transaction(status_vector, transaction)
-  detach_database(status_vector, db)
+except FirebirdException:
+  rollback_transaction(status_vector, transaction)
+  echo "Transaction failed."
 
-  if attach_database(status_vector, "ex02.fdb", db) != 0:
-    echo "Failed to attach database."
-    break thingdo
-
-  start_transaction(status_vector, transaction, db)
-  dsql_execute_immediate(status_vector, db, transaction, "CREATE TABLE things(when: DATE)")
-  commit_transaction(status_vector, db)
-
-  detach_database(status_vector, db)
+detach_database(status_vector, db)

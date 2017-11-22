@@ -167,7 +167,7 @@ Queries can also be associated with a transaction.  While some queries are calle
 
 Runs a statement that does not return data.
 
-If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should initially be zero. A handle to the new database is written to @var{db}, and a new transaction is started whom's handle is written to @var{transaction}. You must commit the transaction to finish creating the database. @xref{commit_transaction}@.
+If running a @code{CREATE DATABASE} query, @var{db} and @var{transaction} should initially be zero.  @var{db} will be written to with the handle to the newly created database.
 
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_dsql_execute_immediate()}
 @end deftypefn
