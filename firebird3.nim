@@ -53,12 +53,13 @@ type
 
 type
   FirebirdException* = object of Exception
-    vector*: STATUS_ARRAY
+    status*: STATUS_ARRAY
 
-proc new_firebird_exception*(vector: var STATUS_ARRAY): ref FirebirdException {.inline.} =
+proc new_firebird_exception*(status: var STATUS_ARRAY): ref FirebirdException {.inline.} =
   # TODO interrogate error vector for a proper string
   result = newexception(FirebirdException, "Firebird error.")
-  deepcopy(result.vector, vector)
+  for x in low(result.status)..high(result.status):
+    result.status[x] = status[x]
 
 #* Define type, export and other stuff based on c/c++ and Windows */
 #******************************************************************/
