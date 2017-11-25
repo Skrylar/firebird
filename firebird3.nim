@@ -518,7 +518,7 @@ proc dsql_exec_immed2*(status: var; db: var; transaction: var; statement_length:
 
 proc dsql_execute_inner(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): STATUS {.importc: "isc_dsql_execute", header: ibase_h.}
 
-proc dsql_execute*(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil) {.inline.} =
+proc dsql_execute*(status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort; xsql: ptr XSQLDA) {.inline.} =
   if dsql_execute_inner(status, transaction, statement, dialect, xsql) != 0:
     raise new_firebird_exception(status)
 
@@ -550,9 +550,9 @@ proc dsql_free_statement*(status: var STATUS_ARRAY; statement: var stmt_handle; 
 
 # TODO STATUS isc_dsql_insert(status: var STATUS_ARRAY, stmt_handle*, unsigned short, XSQLDA*);
 
-proc dsql_prepare_inner(status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA): STATUS {.importc: "isc_dsql_prepare", header: ibase_h.}
+proc dsql_prepare_inner(status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement_length: cushort; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil): STATUS {.importc: "isc_dsql_prepare", header: ibase_h.}
 
-proc dsql_prepare*(status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: var XSQLDA): STATUS {.inline.} =
+proc dsql_prepare*(status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil) {.inline.} =
   if dsql_prepare_inner(status, transaction, statement_handle, 0, statement, dialect, xsql) != 0:
     raise new_firebird_exception(status)
 
