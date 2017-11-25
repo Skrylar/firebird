@@ -299,40 +299,6 @@ type
 
   PXSQLDA* = ptr XSQLDA
 
-template XSQLDA_LENGTH*(n: int): int =
-  XSQLDA.sizeof + ((n - 1) * XSQLVAR.sizeof)
-
-proc `[]`* (self: PXSQLDA; index: int): PXSQLVAR =
-  # bounds checking
-  assert index >= 0
-  assert index < self.sqln
-  # return the thing
-  var x = cast[int](unsafeaddr self.sqlvar[0])
-  inc x, (XSQLVAR.sizeof) * index
-  result = cast[PXSQLVAR](x)
-
-proc make_xsqlda*(vars: int): PXSQLDA =
-  result = cast[PXSQLDA](alloc(XSQLDA_LENGTH(vars)))
-  result.version = SQLDA_VERSION1
-  result.sqln = vars.cshort
-  result.sqld = vars.cshort
-
-proc free_xsqlda*(self: PXSQLDA; dealloc_children: bool = true) =
-  # free potentially allocated data; if you are doing cheeky things,
-  # like using pointers to local value buffers, you will want this to
-  # be false.
-  if dealloc_children:
-    for i in 0..self.sqln:
-      let here = self[i]
-      if here.sqldata != nil:
-        dealloc(here.sqldata)
-      if here.sqlind != nil:
-        dealloc(here.sqlind)
-  # now ditch the object
-  dealloc(self)
-
-#define XSQLDA_LENGTH(n)        (sizeof (XSQLDA) + (n - 1) * sizeof (XSQLVAR))
-
 const
   SQL_TEXT*                       =   452
   SQL_VARYING*                    =   448
@@ -351,6 +317,79 @@ const
   SQL_BOOLEAN*                    = 32764
   SQL_NULL*                       = 32766
   SQL_DATE*                       =   SQL_TIMESTAMP
+
+template XSQLDA_LENGTH*(n: int): int =
+  XSQLDA.sizeof + ((n - 1) * XSQLVAR.sizeof)
+
+proc `[]`* (self: PXSQLDA; index: int): PXSQLVAR =
+  # bounds checking
+  assert index >= 0
+  assert index < self.sqln
+  # return the thing
+  var x = cast[int](unsafeaddr self.sqlvar[0])
+  inc x, (XSQLVAR.sizeof) * index
+  result = cast[PXSQLVAR](x)
+
+proc make_xsqlda*(vars: int): PXSQLDA =
+  result = cast[PXSQLDA](alloc(XSQLDA_LENGTH(vars)))
+  result.version = SQLDA_VERSION1
+  result.sqln = vars.cshort
+  result.sqld = vars.cshort
+
+proc free*(self: PXSQLDA; dealloc_children: bool = true) =
+  # free potentially allocated data; if you are doing cheeky things,
+  # like using pointers to local value buffers, you will want this to
+  # be false.
+  if dealloc_children:
+    for i in 0..<self.sqln:
+      let here = self[i]
+      if here.sqldata != nil:
+        dealloc(here.sqldata)
+      if here.sqlind != nil:
+        dealloc(here.sqlind)
+  # now ditch the object
+  dealloc(self)
+
+template connect*(self: PXSQLDA; index: int; value: ptr clong; ind: ptr cshort) =
+  assert index >= 0
+  assert index < self.sqln
+  let here = self[index]
+  here.sqltype = SQL_LONG + 1
+  here.sqllen = clong.sizeof.int16
+  here.sqldata = cast[pointer](value)
+  here.sqlind = ind
+
+template connect_char*(self: PXSQLDA; index: int; value: var string; ind: ptr cshort) =
+  assert index >= 0
+  assert index < self.sqln
+  let here = self[index]
+  here.sqltype = SQL_TEXT + 1
+  here.sqllen = value.len.int16
+  here.sqldata = value[0].addr
+  here.sqlind = ind
+
+template connect_varchar*(self: PXSQLDA; index: int; value: var string; ind: ptr cshort) =
+  assert index >= 0
+  assert index < self.sqln
+  let here = self[index]
+  here.sqltype = SQL_VARYING + 1
+  here.sqllen = value.len.int16 - cshort.sizeof.int16
+  here.sqldata = value[0].addr
+  here.sqlind = ind
+
+proc `$`*(self: PXSQLVAR): string =
+  case (self.sqltype - 1)
+  of SQL_VARYING:
+    let sl = cast[ptr cshort](self.sqldata)[]
+    result = newstring(sl.int)
+    for i in 0..<sl:
+      # i'm sure this _totally_ won't become a performance issue someday
+      result[i] = cast[ptr char](cast[int](self.sqldata)+i+cshort.sizeof)[]
+  else:
+    result = "<Unknown Firebird type.>"
+
+#define XSQLDA_LENGTH(n)        (sizeof (XSQLDA) + (n - 1) * sizeof (XSQLVAR))
+
 
 #* SQL Dialects            */
 #***************************/
