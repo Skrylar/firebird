@@ -594,7 +594,8 @@ proc open_blob*(status: var STATUS_ARRAY; db: var db_handle; transaction: var tr
 
 # TODO STATUS isc_prepare_transaction2(status: var STATUS_ARRAY, transaction: var tr_handle, cushort, const cuchar*);
 # TODO void isc_print_sqlerror(cshort, const status: var STATUS_ARRAY);
-# TODO STATUS isc_print_status(const status: var STATUS_ARRAY);
+
+proc print*(status: var STATUS_ARRAY): STATUS {.importc: "isc_print_status", header: ibase_h, discardable.}
 
 proc put_segment_inner(status: var STATUS_ARRAY; blob: var blob_handle; blen: cushort; buf: ptr int8): STATUS {.importc: "isc_put_segment", header: ibase_h.}
 
