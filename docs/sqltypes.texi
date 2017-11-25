@@ -7,8 +7,10 @@ As Firebird's documentation is lacking on which specific types match up to which
 @multitable {SQL_TIMESTAMP} {Memory buffer}
 @headitem Type name
 @tab Nim type
-@item SQL_TEXT, SQL_VARYING
-@tab Memory buffer@footnote{This is not a data type.  Text and Varying fields take pointers to memory containing the text in question.  They also use the length field to determine how large the buffer is (or how much of the buffer was written to.)}
+@item SQL_TEXT
+@tab string@footnote{TODO document special use of strings here.}
+@item SQL_VARYING
+@tab string@footnote{TODO document use of special struct for this.}
 @item SQL_SHORT
 @tab cshort
 @item SQL_LONG

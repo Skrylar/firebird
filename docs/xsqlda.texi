@@ -10,7 +10,21 @@
 @node XSQLDA
 @section XSQLDA
 
+@example
+XSQLDA* @{.importc, header: ibase_h.@} = object
+  version*: cshort
+  sqldaid*: array[0..7, cchar]
+  sqldabc*: int32
+  sqln*: cshort # @r{number of parameters allocated}
+  sqld*: cshort # @r{number of parameters firebird wants to use}
+  sqlvar*: array[0..0, XSQLVAR]
+@end example
+
 An @code{XSQDLA} is an object you need to understand before you can deal with queries and other useful database code.  @code{XSQLDA} is basically a block of @dfn{variables} described by the @code{XSQLVAR} object.  You create one, tell it how many variables it can maximally support, then pass it to various database functions when requested.  They then write (up to this maximum) number of values.  Each variable can be accessed individually as well.
+
+@subsection Variables
+
+
 
 @subsection Functions
 
@@ -20,11 +34,11 @@ Returns the amount of memory which must be allocated to store an @code{XSQLDA} o
 
 @anchor{make_xsqlda}
 @deftypefn Proc PXSQLDA make_xsqlda vars: int
-Allocates a new @code{XSQLDA} in unmanaged memory, with enough slots for @var{vars} variables.  Must be freed manually, @xref{free_xsqlda}@.
+Allocates a new @code{XSQLDA} in unmanaged memory, with enough slots for @var{vars} variables.  Must be freed manually, @xref{free_xsqlda,,free}@.
 @end deftypefn
 
 @anchor{free_xsqlda}
-@deftypefn Proc void free_xsqlda self: PXSQLDA; free_children: bool = true
+@deftypefn Proc void free self: PXSQLDA; free_children: bool = true
 Frees an @code{XSQLDA} that was previously allocated.  @xref{make_xsqlda}@.
 
 If @var{free_children} is @code{true}, pointers within the variable that are non-@code{nil} will be freed with Nim's built-in @code{dealloc} routine.  If you are using pointers to local data buffers, or cheeky pointer manipulations with @code{alloc} memory, set this to @code{false}.
@@ -58,6 +72,8 @@ XSQLVAR* @{.importc, header: ibase_h.@} = object
 @end example
 
 An @code{XSQLVAR} can represent either a variable going in to the database via a prepared statement (@xref{Prepared Queries}), or coming out of the database via a query.
+
+@subsection Variables
 
 @vtable @code
 @item sqltype
