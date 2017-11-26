@@ -69,9 +69,17 @@ XSQLVAR* @{.importc, header: ibase_h.@} = object
   ownname*: array[0..31, int8]
   aliasname_length*: cshort
   aliasname*: array[0..31, int8]
+
+PXSQLDA = ptr XSQLVAR           # @r{Shorthand.}
 @end example
 
 An @code{XSQLVAR} can represent either a variable going in to the database via a prepared statement (@xref{Prepared Queries}), or coming out of the database via a query.
+
+@subsection Functions
+
+@deftypefn Proc string $ @var{self}: PXSQLVAR
+Makes a best-effort attempt to extract the value of this variable, and return that value as a string.  Varchars will be trimmed to their actual size, integers will be stringified, etc.
+@end deftypefn
 
 @subsection Variables
 

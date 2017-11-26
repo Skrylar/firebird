@@ -8,7 +8,9 @@ var transaction: tr_handle
 try:
   dsql_execute_immediate(status_vector, db, transaction, "create database 'ex03.fdb'")
 except FirebirdException:
-  echo "Failed to create database.  Perhaps 'ex03.fdb' already exists?"
+  let e = (ref FirebirdException)(getCurrentException())
+  echo "Failed to create database:"
+  e.status.print
   raise
 assert db != 0
 

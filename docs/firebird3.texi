@@ -26,6 +26,8 @@ Strings begin with their length, and bytes of the string follow.
 
 @section Numeric Types
 
+The following table describes how to convert an ``ISC'' numeric type, to a native Nim type:
+
 @multitable {Firebird Type} {Nim Type}
 @headitem Firebird Type
 @tab Nim Type
@@ -66,7 +68,7 @@ To interact with a database in Firebird you must @dfn{attach} one.  A successful
 
 @deftypefn Proc void attach_database @var{status_vector}: var STATUS_ARRAY; @var{db_name}: cstring; @var{db}: var db_handle; @var{parm_buffer_length}: cshort = 0; @var{parm_buffer}: cstring = nil
 
-Attaches a new database.
+Attaches a database.  @var{db_name} is the name of a file, or a Firebird connection string.  It is also possible to attach databases using by executing @code{ATTACH DATABASE} SQL.
 
 @table @code
 @item status
@@ -105,6 +107,38 @@ Handle to the database to be freed.
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_detach_database()}
 
 @end deftypefn
+
+@node Exceptions
+@chapter Exceptions
+
+The wrapper automatically checks the return codes from each function, and if those codes indicate a problem an exception is thrown.  You may use this exception to figure out what the original database error was, or which call failed, as with any other Nim exception.
+
+@example
+FirebirdException* = object of Exception
+  status*: STATUS_ARRAY         # @r{A copy of the status array.}
+@end example
+
+@section Functions
+
+@deftypefn Proc {ref FirebirdException} new_firebird_exception status: var STATUS_ARRAY
+Creates a new @code{FirebirdException} and copies a @var{status} vector in to it.
+@end deftypefn
+
+@deftypefn Proc STATUS print status: var STATUS_ARRAY
+
+@quotation Note
+This proc is provided by Firebird itself, which has no option to write errors to strings.  An exeption-friendly version will have to be written.
+@end quotation
+
+Prints a textual version of the error to @code{stdout}.  Useful for debugging exactly what caused the exception to throw.
+@end deftypefn
+
+@section Variables
+
+@vtable @code
+@item status
+A copy of the error status vector for the call that failed.  Keeping a copy is less efficient, though decouples the lifecycle of your status vector from exception code.  Since most calls are expected to be successful this shouldn't become a performance issue.
+@end vtable
 
 @node Transactions
 @chapter Transactions
@@ -227,7 +261,7 @@ Like unprepare, but the handle is destroyed after the statement is unprepared.
 @subsection Preparation
 
 @anchor{dsql_prepare}
-@deftypefn Proc void dsql_prepare status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement: cstring; dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil
+@deftypefn Proc void dsql_prepare status: var STATUS_ARRAY; transaction: var tr_handle; statement_handle: var stmt_handle; statement: cstring; [dialect: cushort = SQL_DIALECT_CURRENT; xsql: ptr XSQLDA = nil]
 @end deftypefn
 
 Statements may contain placeholders, which are specified with the @code{?} (question mark) character.  Use of placeholders prevents SQL injection attacks.  To use placeholders, you must prepare an @code{XSQLDA} object to contain the values which are going in to the placeholder's positions.  For example the following:
@@ -257,7 +291,7 @@ Analyzes the prepared @var{statement}, and stores the necessary variable definit
 
 @subsection Execution
 
-@deftypefn Proc void dsql_execute status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil)
+@deftypefn Proc void dsql_execute status: var STATUS_ARRAY; transaction: var tr_handle; statement: var stmt_handle; [dialect: cushort = SQL_DIALECT_CURRENT; [inx, ]outx: ptr XSQLDA = nil]
 Runs a previously prepared statement.  @xref{dsql_prepare}@.
 
 @var{inx} may be left out, or @code{nil}, if a statement has no placeholders.  Statements with placeholders must be given a valid @code{XSQLDA} in the @var{inx} parameter.  @var{inx} contains the input values to replace each placeholder with.
