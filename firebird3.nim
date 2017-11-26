@@ -170,7 +170,7 @@ type
     ctl_number_segments*: int32
     ctl_total_length*: int32
     ctl_status*: ptr STATUS
-    ctl_data*: array[0..7, clong]
+    ctl_data*: array[0..7, int32]
 
   BLOB_CTL* = ptr blob_ctl_obj
 
@@ -350,13 +350,13 @@ proc free*(self: PXSQLDA; dealloc_children: bool = true) =
   # now ditch the object
   dealloc(self)
 
-template connect*(self: PXSQLDA; index: int; value: ptr clong; ind: ptr cshort) =
+template connect*(self: PXSQLDA; index: int; value: ptr int32; ind: ptr cshort) =
   assert index >= 0
   assert index < self.sqln
   let here = self[index]
   here.sqltype = SQL_LONG + 1
-  here.sqllen = clong.sizeof.int16
-  here.sqldata = cast[pointer](value)
+  here.sqllen = 4
+  here.sqldata = value
   here.sqlind = ind
 
 template connect_char*(self: PXSQLDA; index: int; value: var string; ind: ptr cshort) =

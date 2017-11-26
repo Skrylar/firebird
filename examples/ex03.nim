@@ -57,7 +57,7 @@ try:
   assert outx.sqld == 2
 
   var nameind, wingsind: cshort # checks if the values are NULL
-  var wings: clong
+  var wings: int32
   outx.connect 0, addr wings, addr wingsind
 
   var name = newstring(30)
