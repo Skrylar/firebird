@@ -507,7 +507,6 @@ USER_SEC_DATA* @{.importc, header: ibase_h.@} = object
 @deftypefn Proc void modify_user @var{status}: var STATUS_ARRAY; @var{data}: var USER_SEC_DATA
 @end deftypefn
 
-
 @node Silliness with Numbers
 @chapter Silliness with Numbers
 
@@ -520,12 +519,53 @@ Flips the byte order of numbers, converting them from little-endian to big-endia
 @cite{http://docwiki.embarcadero.com/InterBase/XE7/en/Isc_portable_integer()}
 @end deftypefn
 
-@include sqltypes.texi
-
 @node Index of Procs
-@appendix Index of Procs
+@unnumbered Index of Procs
 
 @syncodeindex vr fn
 @printindex fn
+
+@node Troubleshooting
+@chapter Troubleshooting
+
+@section Embedding
+
+@subsection Firebird 2.5
+
+While not explicitly supported, you can use this wrapper with the older Firebird 2.5 releases.  Code which only connects to existing servers may remain unchanged.  In those cases where you also create and modify local database files, you will need to modify the wrapper to link against @code{fbembed} instead of @code{fbclient}.
+
+@subsection Firebird 3.0
+
+Firebird 3.0 replaces multiple builds of the server with a single build, and multiple plugins.  This means you may need to look for @code{firebird-server} packages even if you only intend to modify local database files.  The ``embedded'' version (which used to be the @code{fbembed} library) is now known as the plugin named @code{Engine12}.
+
+@section Cannot connect to localhost
+
+Errors like this appear when trying to connect to local database files.  It means there is no functional server component (i.e. @code{Engine12}) on your system.
+
+Possible solutions:
+@enumerate
+@item
+@anchor{vendorbird}
+@emph{Vendor your dependency}-compile Firebird 3.0 and include the library, as well as Engine12, as part of your distribution.  You will also need to include a @code{firebird.conf} to instruct your compiled Firebird to use the local engine.
+@item
+@emph{Install your distro's server package}-some distributions split Firebird in to ``common,'' ``client,'' and ``server'' packages.  You may need the ``server'' package, even for purely local databases.
+@end enumerate
+
+@section Can not access lock files directory
+
+If you are using a distro's Firebird package, then it may be configured to store lock files in a directory only the server has access to.  This is a good policy for a multi-user data server and a poor policy for a user's local data.
+
+Possible solutions:
+@enumerate
+@item
+@emph{Vendor your dependency}-include and configure Firebird yourself (@xref{vendorbird}@.)
+@item
+Add the end-user to the @samp{firebird} group, or whatever your distribution names said group.
+@item
+@vindex FIREBIRD_LOCK
+Set the @code{FIREBIRD_LOCK} environment variable to a directory writable by the user, prior to starting the process.  You can do this during startup scripts (AppImages, /usr/local installs.)
+@end enumerate
+
+@include sqltypes.texi
 
 @bye
