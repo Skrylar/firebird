@@ -2,9 +2,19 @@
 \input texinfo
 @settitle Nimized Firebird 3
 
+@copying
+Copyright @copyright{} 2017 Joshua Cearley, all rights reserved.
+
+@quotation
+This manual is available to you, additionally, under the terms of the Creative Commons Attribution-ShareAlike (CC BY-SA) license.
+@end quotation
+@end copying
+
 @ifnottex
 @node Top
 @top
+
+@insertcopying
 @end ifnottex
 
 @node Porting Guide
